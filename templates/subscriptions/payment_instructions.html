@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Instructions - {{ method_info.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-phone"></i> Payment Instructions - {{ method_info.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Payment Details</h5>
+                        <p class="mb-1"><strong>Amount:</strong> KSh {{ payment.amount|floatformat:0 }}</p>
+                        <p class="mb-1"><strong>Transaction Reference:</strong> <code>{{ transaction_ref }}</code></p>
+                        <p class="mb-0"><strong>Phone Number:</strong> {{ payment.phone_number }}</p>
+                    </div>
+
+                    <div class="payment-instructions">
+                        <h5 class="mb-3"><i class="bi bi-list-ol"></i> Follow these steps:</h5>
+                        <ol class="list-group list-group-numbered">
+                            {% for instruction in method_info.instructions %}
+                            <li class="list-group-item">{{ instruction }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-warning mt-4">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Important:</h6>
+                        <ul class="mb-0">
+                            <li>Make sure to use the exact transaction reference: <strong>{{ transaction_ref }}</strong></li>
+                            <li>After completing the payment, you'll receive a confirmation code via SMS</li>
+                            <li>Enter the confirmation code below to activate your subscription</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'subscriptions:confirm_payment' payment.id %}" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-check-circle"></i> I've Completed the Payment
+                        </a>
+                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-secondary mt-2 w-100">
+                            <i class="bi bi-arrow-left"></i> Back to Plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

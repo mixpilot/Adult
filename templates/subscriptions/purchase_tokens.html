@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Tokens{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Purchase Tokens</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Select Token Package</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            {% for value, label in form.token_amount.field.choices %}
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="token_amount" 
+                                                   id="tokens_{{ value }}" value="{{ value }}" 
+                                                   {% if forloop.first %}checked{% endif %}>
+                                            <label class="form-check-label w-100" for="tokens_{{ value }}">
+                                                <h5>{{ label }}</h5>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-credit-card"></i> Proceed to Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Balance</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-4 fw-bold text-primary">{{ token.balance }}</h2>
+                    <p class="text-muted">Tokens</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

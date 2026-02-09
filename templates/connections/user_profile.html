@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Large Profile Photo Gallery -->
+            <div class="card mb-4">
+                <div class="card-body text-center p-0">
+                    {% if profile_photos %}
+                    {% if profile_photos.count > 1 %}
+                    <div id="profilePhotoCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for photo in profile_photos %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ photo.photo.url }}" class="d-block w-100" style="height: 400px; object-fit: cover;" alt="{{ profile_user.username }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                        <div class="carousel-indicators">
+                            {% for photo in profile_photos %}
+                            <button type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <img src="{{ profile_photos.first.photo.url }}" class="img-fluid w-100" style="height: 400px; object-fit: cover;" alt="{{ profile_user.username }}">
+                    {% endif %}
+                    {% else %}
+                    <div style="height: 400px; display: flex; align-items: center; justify-content: center; background: #2a2a2a;">
+                        <i class="bi bi-person-circle" style="font-size: 200px; color: #666;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-3">
+                        <h3>{{ profile_user.username }}</h3>
+                        {% if profile_user.hookup_profile %}
+                        <p class="mb-2">
+                            {% if profile_user.hookup_profile.age %}{{ profile_user.hookup_profile.age }}{% endif %}
+                            {% if profile_user.hookup_profile.gender %} • {{ profile_user.hookup_profile.get_gender_display }}{% endif %}
+                        </p>
+                        {% if profile_user.hookup_profile.is_active_now %}
+                        <span class="badge bg-success mb-2">Online Now</span>
+                        {% else %}
+                        <span class="badge bg-secondary mb-2">Offline</span>
+                        {% endif %}
+                        {% endif %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-eye"></i> {{ visit_count }} profile view{{ visit_count|pluralize }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card">
+                <div class="card-body">
+                    {% if is_matched %}
+                    <p class="text-success"><i class="bi bi-heart-fill"></i> You're matched!</p>
+                    <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-primary w-100 mb-2">Send Message</a>
+                    {% elif is_pending %}
+                    <p class="text-warning"><i class="bi bi-clock"></i> Connection pending</p>
+                    {% elif has_reverse_connection %}
+                    <p class="text-info">They connected with you!</p>
+                    <button onclick="connectUser({{ profile_user.id }})" class="btn btn-success w-100 mb-2">Match Back</button>
+                    {% else %}
+                    <button onclick="connectUser({{ profile_user.id }})" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-heart"></i> Connect
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-secondary w-100 mb-2">Message</a>
+                    <form method="post" action="{% url 'connections:block' profile_user.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to block this user?')">Block</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Profile Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>About</h4>
+                </div>
+                <div class="card-body">
+                    {% if profile_user.hookup_profile %}
+                    <p><strong>Seeking:</strong> {{ profile_user.hookup_profile.get_seeking_display }}</p>
+                    {% if profile_user.hookup_profile.location %}
+                    <p><strong>Location:</strong> {{ profile_user.hookup_profile.location }}</p>
+                    {% endif %}
+                    {% if profile_user.hookup_profile.bio %}
+                    <p><strong>Bio:</strong><br>{{ profile_user.hookup_profile.bio|linebreaks }}</p>
+                    {% endif %}
+                    {% if profile_user.hookup_profile.interests %}
+                    <p><strong>Interests:</strong> {{ profile_user.hookup_profile.interests }}</p>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-muted">No profile information available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Report User -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Report User</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        If this user is engaging in harassment, spam, fake identity, or other unsafe behavior, you can submit a report for review.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ report_form.reason }}
+                        <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Photo Gallery -->
+            {% if profile_photos.count > 1 %}
+            <div class="card">
+                <div class="card-header">
+                    <h4>Photo Gallery ({{ profile_photos.count }} photos)</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for photo in profile_photos %}
+                        <div class="col-md-3 col-sm-4 col-6">
+                            <a href="#" onclick="showPhotoInCarousel({{ forloop.counter0 }}); return false;">
+                                <img src="{{ photo.photo.url }}" class="img-fluid rounded" alt="Photo {{ forloop.counter }}" style="height: 150px; width: 100%; object-fit: cover; cursor: pointer;">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function connectUser(userId) {
+    fetch(`/connections/connect/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'matched') {
+            alert('🎉 It\'s a match!');
+        } else {
+            alert('Connection sent!');
+        }
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+}
+
+function showPhotoInCarousel(index) {
+    const carousel = document.getElementById('profilePhotoCarousel');
+    if (carousel) {
+        const carouselInstance = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
+        carouselInstance.to(index);
+        // Scroll to carousel
+        carousel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+</script>
+{% endblock %}

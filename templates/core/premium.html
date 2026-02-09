@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Premium Membership - Unlock Exclusive Content{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Hero Section -->
+    <div class="premium-hero mb-5 text-center">
+        <h1 class="display-3 fw-bold mb-3">💎 Unlock Premium Experience</h1>
+        <p class="lead mb-4">Get unlimited access to exclusive content, HD streaming, and premium features</p>
+        <a href="{% url 'accounts:register' %}" class="btn btn-warning btn-lg px-5">Upgrade to Premium</a>
+    </div>
+
+    <!-- Premium Benefits -->
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Premium Benefits</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-hd-display display-4 text-warning mb-3"></i>
+                            <h4>HD & 4K Streaming</h4>
+                            <p class="text-muted">Watch content in crystal-clear HD and 4K quality</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-chat-dots display-4 text-warning mb-3"></i>
+                            <h4>Unlimited Messaging</h4>
+                            <p class="text-muted">Chat with unlimited users without restrictions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-eye display-4 text-warning mb-3"></i>
+                            <h4>See Profile Visitors</h4>
+                            <p class="text-muted">Know who viewed your profile</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-funnel display-4 text-warning mb-3"></i>
+                            <h4>Advanced Filters</h4>
+                            <p class="text-muted">Find exactly what you're looking for with premium filters</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-star-fill display-4 text-warning mb-3"></i>
+                            <h4>Exclusive Content</h4>
+                            <p class="text-muted">Access premium-only content from verified creators</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-shield-check display-4 text-warning mb-3"></i>
+                            <h4>Verified Creators</h4>
+                            <p class="text-muted">Connect with verified and trusted creators</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-x-circle display-4 text-warning mb-3"></i>
+                            <h4>No Ads</h4>
+                            <p class="text-muted">Enjoy uninterrupted browsing experience</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-headset display-4 text-warning mb-3"></i>
+                            <h4>Priority Support</h4>
+                            <p class="text-muted">Get priority customer support</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card premium-benefit-card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-download display-4 text-warning mb-3"></i>
+                            <h4>Download Content</h4>
+                            <p class="text-muted">Download premium content for offline viewing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Free vs Premium</h2>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th class="text-center">Free</th>
+                            <th class="text-center">Premium</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Content Views</td>
+                            <td class="text-center">Limited</td>
+                            <td class="text-center"><strong class="text-warning">Unlimited</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Ads</td>
+                            <td class="text-center">Yes</td>
+                            <td class="text-center"><strong class="text-warning">No Ads</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Content Previews</td>
+                            <td class="text-center">Blurred</td>
+                            <td class="text-center"><strong class="text-warning">Full Access</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Messaging</td>
+                            <td class="text-center">Basic</td>
+                            <td class="text-center"><strong class="text-warning">Unlimited</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Downloads</td>
+                            <td class="text-center">No</td>
+                            <td class="text-center"><strong class="text-warning">Yes</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Profile Visitors</td>
+                            <td class="text-center">No</td>
+                            <td class="text-center"><strong class="text-warning">Yes</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Advanced Filters</td>
+                            <td class="text-center">No</td>
+                            <td class="text-center"><strong class="text-warning">Yes</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Premium Content</td>
+                            <td class="text-center">Locked</td>
+                            <td class="text-center"><strong class="text-warning">Unlocked</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Video Quality</td>
+                            <td class="text-center">Standard</td>
+                            <td class="text-center"><strong class="text-warning">HD & 4K</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Support</td>
+                            <td class="text-center">Standard</td>
+                            <td class="text-center"><strong class="text-warning">Priority</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row mb-5">
+        <div class="col-md-12 text-center">
+            <div class="card premium-cta-card">
+                <div class="card-body p-5">
+                    <h2 class="mb-3">Ready to Upgrade?</h2>
+                    <p class="lead mb-4">Join thousands of satisfied premium members</p>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-warning btn-lg px-5">Get Premium Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.premium-hero {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+    padding: 80px 30px;
+    border-radius: 15px;
+    color: white;
+}
+
+.premium-benefit-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #3a3a3a;
+}
+
+.premium-benefit-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+}
+
+.premium-cta-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+</style>
+{% endblock %}

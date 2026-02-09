@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ content.title }} - Adult Entertainment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Content Player/Viewer -->
+            <div class="content-viewer mb-4">
+                {% if content.content_type == 'video' %}
+                    {% if content.is_premium and not user.is_staff %}
+                        <!-- Premium Teaser Clip with Countdown -->
+                        <div class="premium-teaser-wrapper" id="premiumTeaserWrapper">
+                            {% if content.video_file %}
+                            <video id="teaserVideo" class="w-100 teaser-video" style="max-height: 600px;" autoplay muted>
+                                <source src="{{ content.video_file.url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            {% elif content.video_url %}
+                            <div class="ratio ratio-16x9">
+                                <iframe src="{{ content.video_url }}" allowfullscreen></iframe>
+                            </div>
+                            {% endif %}
+                            <div class="teaser-overlay" id="teaserOverlay">
+                                <div class="countdown-timer" id="countdownTimer">
+                                    <span class="countdown-text">Free preview ends in</span>
+                                    <span class="countdown-number" id="countdownNumber">15</span>
+                                    <span class="countdown-seconds">seconds</span>
+                                </div>
+                                <div class="unlock-prompt" id="unlockPrompt" style="display: none;">
+                                    <i class="bi bi-lock-fill display-4 mb-3"></i>
+                                    <h3>Unlock Full Video</h3>
+                                    <p class="mb-4">Upgrade to Premium to watch the full video</p>
+                                    <a href="{% url 'core:premium' %}" class="btn btn-warning btn-lg">Upgrade Now</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Full Video for Premium Users or Free Content -->
+                        {% if content.video_file %}
+                        <video controls class="w-100" style="max-height: 600px;">
+                            <source src="{{ content.video_file.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        {% elif content.video_url %}
+                        <div class="ratio ratio-16x9">
+                            <iframe src="{{ content.video_url }}" allowfullscreen></iframe>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% elif content.content_type == 'image' %}
+                    <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" class="img-fluid w-100">
+                {% elif content.content_type == 'gallery' %}
+                    <div id="contentGallery" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in content.images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ content.title }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#contentGallery" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#contentGallery" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Content Info -->
+            <div class="content-info mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1>{{ content.title }}</h1>
+                    {% if user.is_authenticated %}
+                    <button id="bookmarkBtn" class="btn btn-outline-warning" onclick="toggleBookmark({{ content.id }})">
+                        <i class="bi {% if is_bookmarked %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+                        <span id="bookmarkText">{% if is_bookmarked %}Bookmarked{% else %}Bookmark{% endif %}</span>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-3 mb-3 flex-wrap align-items-center">
+                    <span><i class="bi bi-eye"></i> {{ content.views }} views</span>
+                    <span id="likesCount"><i class="bi bi-heart"></i> <span id="likesNumber">{{ content.likes }}</span> likes</span>
+                    <span><i class="bi bi-calendar"></i> {{ content.created_at|date:"M d, Y" }}</span>
+                    {% if content.category %}
+                    <span><i class="bi bi-folder"></i> <a href="{% url 'content:category_detail' content.category.slug %}">{{ content.category.name }}</a></span>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button id="likeBtn" class="btn btn-sm {% if is_liked %}btn-danger{% else %}btn-outline-danger{% endif %}" onclick="toggleLike({{ content.id }})">
+                        <i class="bi {% if is_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                        <span id="likeText">{% if is_liked %}Liked{% else %}Like{% endif %}</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="shareContent('{{ request.build_absolute_uri }}')">
+                        <i class="bi bi-share"></i> Share
+                    </button>
+                    {% endif %}
+                </div>
+                {% if content.description %}
+                <p class="lead">{{ content.description }}</p>
+                {% endif %}
+                {% if content.tags.all %}
+                <div class="mb-3">
+                    <strong>Tags:</strong>
+                    {% for tag in content.tags.all %}
+                    <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section mb-4">
+                <h3>Comments ({{ comments.count }})</h3>
+                {% if user.is_authenticated %}
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Post Comment</button>
+                </form>
+                {% else %}
+                <p class="text-muted">Please <a href="{% url 'accounts:login' %}">login</a> to comment.</p>
+                {% endif %}
+
+                <div class="comments-list">
+                    {% for comment in comments %}
+                    <div class="comment-item mb-3 p-3 border rounded">
+                        <div class="d-flex align-items-start">
+                            {% if comment.user.avatar %}
+                            <img src="{{ comment.user.avatar.url }}" alt="{{ comment.user.username }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <i class="bi bi-person-circle me-3" style="font-size: 40px; color: #666;"></i>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>{{ comment.user.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-0">{{ comment.text }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No comments yet. Be the first to comment!</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Report Content -->
+            <div class="mb-4">
+                <h4>Report Content</h4>
+                {% if user.is_authenticated %}
+                <form method="post">
+                    {% csrf_token %}
+                    {{ report_form.reason }}
+                    <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Submit Report</button>
+                </form>
+                {% else %}
+                <p class="text-muted">If you believe this content violates our policies, please <a href="{% url 'accounts:login' %}">login</a> to report it.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Related Content -->
+            {% if related_content %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Related Content</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for related in related_content %}
+                        <div class="col-6">
+                            <a href="{% url 'content:detail' related.slug %}">
+                                <img src="{{ related.thumbnail.url }}" alt="{{ related.title }}" class="img-fluid rounded">
+                                <small class="d-block mt-1">{{ related.title|truncatewords:4 }}</small>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Content Meta -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Uploader:</strong> 
+                        {% if content.uploader.hookup_profile %}
+                        <a href="{% url 'connections:user_profile' content.uploader.id %}">{{ content.uploader.username }}</a>
+                        {% else %}
+                        <a href="{% url 'accounts:profile' %}">{{ content.uploader.username }}</a>
+                        {% endif %}
+                    </p>
+                    {% if content.category %}
+                    <p><strong>Category:</strong> <a href="{% url 'content:category_detail' content.category.slug %}">{{ content.category.name }}</a></p>
+                    {% endif %}
+                    <p><strong>Type:</strong> {{ content.content_type|title }}</p>
+                    {% if content.is_premium %}
+                    <p><strong>Status:</strong> <span class="badge bg-warning text-dark">Premium Content</span></p>
+                    {% else %}
+                    <p><strong>Status:</strong> <span class="badge bg-success">Free</span></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Premium Teaser Countdown Timer
+document.addEventListener('DOMContentLoaded', function() {
+    const teaserWrapper = document.getElementById('premiumTeaserWrapper');
+    const teaserVideo = document.getElementById('teaserVideo');
+    const countdownTimer = document.getElementById('countdownTimer');
+    const unlockPrompt = document.getElementById('unlockPrompt');
+    const countdownNumber = document.getElementById('countdownNumber');
+    
+    if (teaserWrapper && teaserVideo) {
+        let countdown = 15;
+        let videoPlayed = false;
+        
+        // Start countdown
+        const countdownInterval = setInterval(function() {
+            countdown--;
+            if (countdownNumber) {
+                countdownNumber.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                if (countdownTimer) {
+                    countdownTimer.style.display = 'none';
+                }
+                if (unlockPrompt) {
+                    unlockPrompt.style.display = 'block';
+                }
+                // Pause video after 15 seconds
+                if (teaserVideo && !teaserVideo.paused) {
+                    teaserVideo.pause();
+                }
+            }
+        }, 1000);
+        
+        // Stop video after 15 seconds
+        teaserVideo.addEventListener('timeupdate', function() {
+            if (teaserVideo.currentTime >= 15 && !videoPlayed) {
+                videoPlayed = true;
+                teaserVideo.pause();
+                if (countdownTimer) {
+                    countdownTimer.style.display = 'none';
+                }
+                if (unlockPrompt) {
+                    unlockPrompt.style.display = 'block';
+                }
+            }
+        });
+    }
+});
+
+function toggleBookmark(contentId) {
+    fetch(`/content/bookmark/${contentId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const btn = document.getElementById('bookmarkBtn');
+        const text = document.getElementById('bookmarkText');
+        const icon = btn.querySelector('i');
+        
+        if (data.bookmarked) {
+            icon.className = 'bi bi-bookmark-fill';
+            text.textContent = 'Bookmarked';
+            btn.classList.add('active');
+        } else {
+            icon.className = 'bi bi-bookmark';
+            text.textContent = 'Bookmark';
+            btn.classList.remove('active');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function toggleLike(contentId) {
+    fetch(`/content/like/${contentId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const btn = document.getElementById('likeBtn');
+        const text = document.getElementById('likeText');
+        const icon = btn.querySelector('i');
+        const likesNumber = document.getElementById('likesNumber');
+        
+        if (data.liked) {
+            icon.className = 'bi bi-heart-fill';
+            text.textContent = 'Liked';
+            btn.className = 'btn btn-sm btn-danger';
+        } else {
+            icon.className = 'bi bi-heart';
+            text.textContent = 'Like';
+            btn.className = 'btn btn-sm btn-outline-danger';
+        }
+        
+        if (likesNumber) {
+            likesNumber.textContent = data.likes_count;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function shareContent(url) {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ content.title }}',
+            text: 'Check out this content!',
+            url: url
+        }).catch(err => console.log('Error sharing', err));
+    } else {
+        // Fallback: Copy to clipboard
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        }).catch(err => {
+            // Final fallback: Show URL in prompt
+            prompt('Copy this link:', url);
+        });
+    }
+}
+</script>
+{% endblock %}

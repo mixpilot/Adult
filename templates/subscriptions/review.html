@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Subscription - {{ plan.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Progress Steps -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-center flex-fill">
+                        <div class="badge bg-primary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">1</div>
+                        <p class="small mb-0">Select Plan</p>
+                    </div>
+                    <div class="flex-fill text-center">
+                        <hr class="my-0">
+                    </div>
+                    <div class="text-center flex-fill">
+                        <div class="badge bg-primary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">2</div>
+                        <p class="small mb-0"><strong>Review</strong></p>
+                    </div>
+                    <div class="flex-fill text-center">
+                        <hr class="my-0">
+                    </div>
+                    <div class="text-center flex-fill">
+                        <div class="badge bg-secondary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">3</div>
+                        <p class="small mb-0">Payment</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> Review Your Subscription</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Plan Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">{{ plan.name }}</h5>
+                                    <p class="text-muted mb-0">{{ plan.description }}</p>
+                                </div>
+                                {% if plan.tier == 'premium' %}
+                                <span class="badge bg-warning text-dark">MOST POPULAR</span>
+                                {% elif plan.tier == 'vip' %}
+                                <span class="badge bg-danger">VIP</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Plan Features -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Features:</h6>
+                                    <ul class="list-unstyled small">
+                                        {% if user_type == 'client' or plan.user_type == 'both' %}
+                                            {% if plan.unlimited_messaging %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Messaging</li>
+                                            {% endif %}
+                                            {% if plan.unlimited_content_access %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Content Access</li>
+                                            {% endif %}
+                                            {% if plan.ad_free %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Ad-Free Experience</li>
+                                            {% endif %}
+                                            {% if plan.advanced_search %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Advanced Search</li>
+                                            {% endif %}
+                                            {% if plan.priority_support %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Priority Support</li>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                        {% if user_type == 'escort' or plan.user_type == 'both' %}
+                                            {% if plan.featured_listing %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Featured Listing</li>
+                                            {% endif %}
+                                            {% if plan.profile_verification_badge %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Verified Badge</li>
+                                            {% endif %}
+                                            {% if plan.unlimited_photos %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Photos</li>
+                                            {% endif %}
+                                            {% if plan.priority_ranking %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Priority Ranking</li>
+                                            {% endif %}
+                                            {% if plan.earnings_tracking %}
+                                            <li><i class="bi bi-check-circle-fill text-success"></i> Earnings Dashboard</li>
+                                            {% endif %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Billing Period Selection -->
+                    <form method="get" action="{% url 'subscriptions:review_subscription' %}" id="reviewForm">
+                        <input type="hidden" name="plan" value="{{ plan.id }}">
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Select Billing Period</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card {% if billing_period == 'monthly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('monthly')">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="billing_period" value="monthly" {% if billing_period == 'monthly' %}checked{% endif %} onchange="updateReview()">
+                                            <h6 class="mt-2">Monthly</h6>
+                                            <h4 class="text-primary">KSh {{ monthly_price|floatformat:0 }}</h4>
+                                            <small class="text-muted">per month</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if plan.price_quarterly %}
+                                <div class="col-md-4">
+                                    <div class="card {% if billing_period == 'quarterly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('quarterly')">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="billing_period" value="quarterly" {% if billing_period == 'quarterly' %}checked{% endif %} onchange="updateReview()">
+                                            <h6 class="mt-2">Quarterly</h6>
+                                            <h4 class="text-primary">KSh {{ quarterly_price|floatformat:0 }}</h4>
+                                            <small class="text-muted">per 3 months</small>
+                                            {% if quarterly_savings > 0 %}
+                                            <div class="badge bg-success mt-2">Save KSh {{ quarterly_savings|floatformat:0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if plan.price_yearly %}
+                                <div class="col-md-4">
+                                    <div class="card {% if billing_period == 'yearly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('yearly')">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="billing_period" value="yearly" {% if billing_period == 'yearly' %}checked{% endif %} onchange="updateReview()">
+                                            <h6 class="mt-2">Yearly</h6>
+                                            <h4 class="text-primary">KSh {{ yearly_price|floatformat:0 }}</h4>
+                                            <small class="text-muted">per year</small>
+                                            {% if yearly_savings > 0 %}
+                                            <div class="badge bg-success mt-2">Save KSh {{ yearly_savings|floatformat:0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Promo Code -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Promo Code (Optional)</h5>
+                            <div class="input-group">
+                                <input type="text" name="promo_code" class="form-control" placeholder="Enter promo code" value="{{ promo_code_text }}">
+                                <button class="btn btn-outline-primary" type="submit">Apply</button>
+                            </div>
+                            {% if promo_code %}
+                            <div class="alert alert-success mt-2">
+                                <i class="bi bi-check-circle"></i> Promo code "{{ promo_code.code }}" applied! 
+                                Discount: KSh {{ discount_amount|floatformat:2 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </form>
+
+                    <!-- Price Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-3">Order Summary</h5>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Plan:</span>
+                                <strong>{{ plan.name }} ({{ billing_period|title }})</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Base Price:</span>
+                                <span>KSh {{ base_price|floatformat:2 }}</span>
+                            </div>
+                            {% if discount_amount > 0 %}
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount:</span>
+                                <span>- KSh {{ discount_amount|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <h5>Total:</h5>
+                                <h4 class="text-primary">KSh {{ final_price|floatformat:2 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form method="post" action="{% url 'subscriptions:subscribe' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="plan" value="{{ plan.id }}">
+                        <input type="hidden" name="billing_period" value="{{ billing_period }}">
+                        {% if promo_code_text %}
+                        <input type="hidden" name="promo_code" value="{{ promo_code_text }}">
+                        {% endif %}
+                        
+                        <h5 class="mb-3">Payment Details</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Payment Method</strong></label>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="mpesa" value="mpesa" checked>
+                                        <label class="form-check-label" for="mpesa">M-Pesa</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="airtel" value="airtel_money">
+                                        <label class="form-check-label" for="airtel">Airtel Money</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="mtn" value="mtn_mobile_money">
+                                        <label class="form-check-label" for="mtn">MTN Mobile Money</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="other" value="mobile_money">
+                                        <label class="form-check-label" for="other">Other Mobile Money</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="phone_number" class="form-label"><strong>Phone Number</strong></label>
+                            <input type="text" class="form-control" id="phone_number" name="phone_number" 
+                                   placeholder="e.g., 0712345678" pattern="[0-9+\-\s()]+" required
+                                   value="{% if user.phone_number %}{{ user.phone_number }}{% endif %}">
+                            <small class="form-text text-muted">Enter your mobile money phone number</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right"></i> Proceed to Payment
+                            </button>
+                            <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Plans
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectBillingPeriod(period) {
+    document.querySelector(`input[value="${period}"]`).checked = true;
+    updateReview();
+}
+
+function updateReview() {
+    document.getElementById('reviewForm').submit();
+}
+</script>
+{% endblock %}

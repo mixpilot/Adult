@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}My Connections{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>My Connections</h2>
+    
+    <ul class="nav nav-tabs mb-4" id="connectionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="matches-tab" data-bs-toggle="tab" data-bs-target="#matches" type="button">
+                Matches <span class="badge bg-success">{{ matches.count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pending-sent-tab" data-bs-toggle="tab" data-bs-target="#pending-sent" type="button">
+                Sent <span class="badge bg-warning">{{ pending_sent.count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pending-received-tab" data-bs-toggle="tab" data-bs-target="#pending-received" type="button">
+                Received <span class="badge bg-info">{{ pending_received.count }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="connectionTabsContent">
+        <!-- Matches -->
+        <div class="tab-pane fade show active" id="matches" role="tabpanel">
+            {% if matches %}
+            <div class="row g-4">
+                {% for connection in matches %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card">
+                        <a href="{% url 'connections:user_profile' connection.to_user.id %}">
+                            {% if connection.to_user.profile_photos.exists %}
+                            <img src="{{ connection.to_user.profile_photos.first.photo.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-person-circle" style="font-size: 100px; color: #fff;"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ connection.to_user.username }}</h5>
+                            <a href="{% url 'connections:chat' connection.to_user.id %}" class="btn btn-primary btn-sm w-100">Message</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No matches yet. Start browsing to find connections!</p>
+            {% endif %}
+        </div>
+
+        <!-- Pending Sent -->
+        <div class="tab-pane fade" id="pending-sent" role="tabpanel">
+            {% if pending_sent %}
+            <div class="row g-4">
+                {% for connection in pending_sent %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card">
+                        <a href="{% url 'connections:user_profile' connection.to_user.id %}">
+                            {% if connection.to_user.profile_photos.exists %}
+                            <img src="{{ connection.to_user.profile_photos.first.photo.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-person-circle" style="font-size: 100px; color: #fff;"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ connection.to_user.username }}</h5>
+                            <span class="badge bg-warning">Pending</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No pending sent connections.</p>
+            {% endif %}
+        </div>
+
+        <!-- Pending Received -->
+        <div class="tab-pane fade" id="pending-received" role="tabpanel">
+            {% if pending_received %}
+            <div class="row g-4">
+                {% for connection in pending_received %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card">
+                        <a href="{% url 'connections:user_profile' connection.from_user.id %}">
+                            {% if connection.from_user.profile_photos.exists %}
+                            <img src="{{ connection.from_user.profile_photos.first.photo.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-person-circle" style="font-size: 100px; color: #fff;"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ connection.from_user.username }}</h5>
+                            <button onclick="connectUser({{ connection.from_user.id }})" class="btn btn-success btn-sm w-100">Match Back</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No pending received connections.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function connectUser(userId) {
+    fetch(`/connections/connect/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'matched') {
+            alert('🎉 It\'s a match!');
+        }
+        location.reload();
+    });
+}
+</script>
+{% endblock %}

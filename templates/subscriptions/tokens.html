@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Token Balance{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Token Balance</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h2 class="display-3 fw-bold text-primary">{{ token.balance }}</h2>
+                    <p class="lead">Tokens Available</p>
+                    <a href="{% url 'subscriptions:purchase_tokens' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle"></i> Purchase Tokens
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Token Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-success">{{ token.lifetime_earned }}</h3>
+                            <p class="text-muted">Lifetime Earned</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-danger">{{ token.lifetime_spent }}</h3>
+                            <p class="text-muted">Lifetime Spent</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-primary">{{ token.balance }}</h3>
+                            <p class="text-muted">Current Balance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">What are Tokens?</h5>
+                </div>
+                <div class="card-body">
+                    <p>Tokens are virtual currency that can be used to:</p>
+                    <ul>
+                        <li>Purchase pay-per-view content</li>
+                        <li>Tip creators</li>
+                        <li>Unlock premium features</li>
+                    </ul>
+                    <p class="mb-0">
+                        <strong>Price:</strong> KSh 13 per token
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'subscriptions:purchase_tokens' %}" class="btn btn-primary w-100 mb-2">
+                        Purchase Tokens
+                    </a>
+                    <a href="{% url 'subscriptions:token_history' %}" class="btn btn-outline-primary w-100">
+                        View History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

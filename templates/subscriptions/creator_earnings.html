@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Creator Earnings - Mali Safi Escorts{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-cash-coin"></i> Creator Earnings</h1>
+        <a href="{% url 'core:home' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Earnings Summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark border-success">
+                <div class="card-body text-center">
+                    <i class="bi bi-cash-stack text-success" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-success">KSh {{ total_earnings|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Total Earnings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock-history text-warning" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-warning">KSh {{ pending_earnings|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-info">
+                <div class="card-body text-center">
+                    <i class="bi bi-wallet2 text-info" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-info">KSh {{ available_earnings|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Available</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-primary">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle text-primary" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-primary">KSh {{ paid_earnings|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Paid Out</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Earnings History -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h3><i class="bi bi-list-ul"></i> Earnings History</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Your Share</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for earning in earnings %}
+                        <tr>
+                            <td>{{ earning.created_at|date:"M d, Y" }}</td>
+                            <td>{{ earning.get_revenue_type_display }}</td>
+                            <td>KSh {{ earning.amount|floatformat:0 }}</td>
+                            <td><strong>KSh {{ earning.creator_share|floatformat:0 }}</strong></td>
+                            <td>
+                                {% if earning.status == 'available' %}
+                                <span class="badge bg-success">Available</span>
+                                {% elif earning.status == 'paid' %}
+                                <span class="badge bg-info">Paid</span>
+                                {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No earnings yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Received -->
+    {% if tips %}
+    <div class="card bg-dark">
+        <div class="card-header">
+            <h3><i class="bi bi-heart-fill"></i> Tips Received</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>Amount</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tip in tips %}
+                        <tr>
+                            <td>{{ tip.created_at|date:"M d, Y" }}</td>
+                            <td>{{ tip.from_user.username }}</td>
+                            <td><strong>KSh {{ tip.amount|floatformat:0 }}</strong></td>
+                            <td>{{ tip.message|default:"No message"|truncatewords:10 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Info Box -->
+    <div class="alert alert-info mt-4">
+        <h5><i class="bi bi-info-circle"></i> How Earnings Work</h5>
+        <ul class="mb-0">
+            <li><strong>Pending:</strong> Earnings are being processed (typically 7-14 days)</li>
+            <li><strong>Available:</strong> Earnings are ready for withdrawal</li>
+            <li><strong>Paid:</strong> Earnings have been paid out</li>
+            <li>Platform fee is typically 30% of gross earnings</li>
+            <li>Minimum withdrawal amount: KSh 6,500</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

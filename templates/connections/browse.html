@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Escorts - Mali Safi Escorts{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Search Filters -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Search Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'connections:browse' %}">
+                        <!-- Basic filters -->
+                        <div class="mb-3">
+                            <label class="form-label">Gender</label>
+                            {{ form.gender }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Seeking</label>
+                            {{ form.seeking }}
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Min Age</label>
+                                {{ form.min_age }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Max Age</label>
+                                {{ form.max_age }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">City</label>
+                            {{ form.city }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Area / Estate</label>
+                            {{ form.area }}
+                        </div>
+                        <div class="form-check mb-3">
+                            {{ form.online_only }}
+                            <label class="form-check-label" for="{{ form.online_only.id_for_label }}">
+                                Online now
+                            </label>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-2">Advanced Filters</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Body Type</label>
+                            {{ form.body_type }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ethnicity</label>
+                            {{ form.ethnicity }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Education</label>
+                            {{ form.education_level }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Relationship Status</label>
+                            {{ form.relationship_status }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Smokes</label>
+                            {{ form.smokes }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Drinks</label>
+                            {{ form.drinks }}
+                        </div>
+                        <div class="form-check mb-2">
+                            {{ form.verified_only }}
+                            <label class="form-check-label" for="{{ form.verified_only.id_for_label }}">
+                                Verified only
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            {{ form.photo_verified_only }}
+                            <label class="form-check-label" for="{{ form.photo_verified_only.id_for_label }}">
+                                Photo verified only
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Search</button>
+                        <a href="{% url 'connections:browse' %}" class="btn btn-secondary w-100 mt-2">Reset</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Grid -->
+        <div class="col-md-9">
+            <h2 class="mb-4"><i class="bi bi-heart"></i> Browse Escorts</h2>
+            <p class="text-muted mb-4">Find verified escorts and connect instantly</p>
+            
+            {% if page_obj %}
+            <div class="row g-4">
+                {% for user in page_obj %}
+                <div class="col-md-4 col-sm-6">
+                    <div class="card user-card">
+                        <a href="{% url 'connections:user_profile' user.id %}">
+                            {% if user.profile_photos.exists %}
+                            <img src="{{ user.profile_photos.first.photo.url }}" class="card-img-top user-photo" alt="{{ user.username }}">
+                            {% else %}
+                            <div class="user-photo-placeholder">
+                                <i class="bi bi-person-circle" style="font-size: 150px; color: #666;"></i>
+                            </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ user.username }}</h5>
+                                {% if user.hookup_profile %}
+                                <p class="card-text">
+                                    {% if user.hookup_profile.age %}{{ user.hookup_profile.age }}{% endif %}
+                                    {% if user.hookup_profile.gender %} • {{ user.hookup_profile.get_gender_display }}{% endif %}
+                                    {% if user.hookup_profile.area %}
+                                        <br><small class="text-muted">
+                                            {{ user.hookup_profile.get_area_display }}
+                                            {% if user.hookup_profile.city %} • {{ user.hookup_profile.city }}{% endif %}
+                                        </small>
+                                    {% elif user.hookup_profile.city %}
+                                        <br><small class="text-muted">{{ user.hookup_profile.city }}</small>
+                                    {% endif %}
+                                </p>
+                                {% if user.hookup_profile.is_active_now %}
+                                <span class="badge bg-success">Online</span>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="card-footer">
+                            <a href="{% url 'connections:user_profile' user.id %}" class="btn btn-primary btn-sm w-100">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No escorts found matching your criteria. Try adjusting your search filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.user-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+.user-photo {
+    height: 250px;
+    object-fit: cover;
+}
+.user-photo-placeholder {
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a2a;
+}
+</style>
+{% endblock %}

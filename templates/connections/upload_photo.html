@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Photo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Upload Profile Photo</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="photoUploadForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Photo</label>
+                            {{ form.photo }}
+                            {% if form.photo.errors %}
+                            <div class="text-danger">{{ form.photo.errors }}</div>
+                            {% endif %}
+                            <div id="photoPreview" class="mt-2"></div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.is_primary }}
+                            <label class="form-check-label" for="{{ form.is_primary.id_for_label }}">
+                                Set as primary photo
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <a href="{% url 'connections:my_profile' %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+                <div class="card-footer small text-muted">
+                    <strong>Guidelines:</strong>
+                    <ul class="mb-0">
+                        <li>Use clear, high-quality images where you are easily visible</li>
+                        <li>No illegal, hateful, or non-consensual content</li>
+                        <li>Images may be reviewed for safety and quality</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('{{ form.photo.auto_id }}');
+    const preview = document.getElementById('photoPreview');
+    if (input) {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) {
+                preview.innerHTML = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                preview.innerHTML = '<img src="' + ev.target.result + '" class="img-thumbnail" style="max-width: 250px;">';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+</script>
+{% endblock %}

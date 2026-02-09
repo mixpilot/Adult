@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscribe - {{ plan.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-credit-card"></i> Subscribe to {{ plan.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5>Selected Plan</h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>{{ plan.name }}</h6>
+                                    <p class="text-muted mb-0">{{ plan.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Billing Period</strong></label>
+                            {{ form.billing_period }}
+                            {% if form.billing_period.errors %}
+                                <div class="text-danger">{{ form.billing_period.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Payment Method</strong></label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="text-danger">{{ form.payment_method.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                <strong>Phone Number</strong>
+                            </label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger">{{ form.phone_number.errors }}</div>
+                            {% endif %}
+                            {% if form.phone_number.help_text %}
+                                <small class="form-text text-muted">{{ form.phone_number.help_text }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.promo_code.id_for_label }}" class="form-label">
+                                <strong>Promo Code (Optional)</strong>
+                            </label>
+                            {{ form.promo_code }}
+                            {% if form.promo_code.errors %}
+                                <div class="text-danger">{{ form.promo_code.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right"></i> Continue to Payment
+                            </button>
+                            <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Plans
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

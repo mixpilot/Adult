@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} - Adult Entertainment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>{{ category.name }}</h1>
+                {% if category.description %}
+                <p class="lead">{{ category.description }}</p>
+                {% endif %}
+            </div>
+            {% if category.thumbnail %}
+            <div class="col-md-4 text-center">
+                <img src="{{ category.thumbnail.url }}" alt="{{ category.name }}" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="row g-4">
+        {% for content in page_obj %}
+        <div class="col-md-3 col-sm-4 col-6">
+            <div class="content-card">
+                <a href="{% url 'content:detail' content.slug %}">
+                    <div class="content-thumbnail">
+                        <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" class="img-fluid">
+                        <div class="content-overlay">
+                            <span class="content-type-badge">{{ content.content_type|upper }}</span>
+                            <div class="content-stats">
+                                <span><i class="bi bi-eye"></i> {{ content.views }}</span>
+                                <span><i class="bi bi-heart"></i> {{ content.likes }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="content-title mt-2">{{ content.title|truncatewords:5 }}</h6>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info">
+        <p class="mb-0">No content found in this category.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

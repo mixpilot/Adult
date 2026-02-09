@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> Confirm Your Payment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> Payment Details</h6>
+                        <p class="mb-1"><strong>Amount:</strong> KSh {{ payment.amount|floatformat:0 }}</p>
+                        <p class="mb-1"><strong>Transaction Reference:</strong> <code>{{ payment.transaction_reference }}</code></p>
+                        <p class="mb-0"><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirmation_code" class="form-label">
+                                <strong>Confirmation Code</strong>
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="confirmation_code" 
+                                name="confirmation_code" 
+                                placeholder="Enter the confirmation code from SMS"
+                                required
+                                autofocus
+                            >
+                            <small class="form-text text-muted">
+                                Enter the confirmation code you received via SMS after completing the payment
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Confirm Payment
+                            </button>
+                            <a href="{% url 'subscriptions:payment_instructions' payment.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Instructions
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="alert alert-warning mt-4">
+                        <h6><i class="bi bi-clock"></i> What happens next?</h6>
+                        <p class="mb-0">
+                            After you submit the confirmation code, our team will verify your payment. 
+                            Your subscription will be activated within 24 hours (usually much faster). 
+                            You'll receive an email notification once it's activated.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

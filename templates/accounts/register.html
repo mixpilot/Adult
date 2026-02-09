@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Mali Safi Escorts{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3>Create Account</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            {{ form.password1 }}
+                            <div id="password-strength" class="mt-2"></div>
+                            {% if form.password1.errors %}
+                            <div class="text-danger">{{ form.password1.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Password must be at least 8 characters and contain letters and numbers.
+                            </small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="text-danger">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Account Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold"><strong>{{ form.user_type.label }}</strong></label>
+                            <div class="card bg-dark border-0 mb-2">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check p-3 border rounded user-type-card" data-type="client" style="cursor: pointer; background: rgba(102, 126, 234, 0.1); border-color: #667eea !important;">
+                                                <input class="form-check-input" type="radio" name="user_type" id="id_user_type_0" value="client" required>
+                                                <label class="form-check-label w-100" for="id_user_type_0" style="cursor: pointer;">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-person-fill text-primary me-2" style="font-size: 1.5rem;"></i>
+                                                        <div>
+                                                            <strong class="d-block">Client</strong>
+                                                            <small class="text-muted">Looking for escorts</small>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check p-3 border rounded user-type-card" data-type="escort" style="cursor: pointer; background: rgba(245, 87, 108, 0.1); border-color: #f5576c !important;">
+                                                <input class="form-check-input" type="radio" name="user_type" id="id_user_type_1" value="escort" required>
+                                                <label class="form-check-label w-100" for="id_user_type_1" style="cursor: pointer;">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-briefcase-fill text-danger me-2" style="font-size: 1.5rem;"></i>
+                                                        <div>
+                                                            <strong class="d-block">Escort</strong>
+                                                            <small class="text-muted">Providing services</small>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.user_type.errors %}
+                            <div class="text-danger">{{ form.user_type.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> You can change this later in your account settings
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.age_verified }}
+                            <label class="form-check-label" for="{{ form.age_verified.id_for_label }}">
+                                {{ form.age_verified.label }}
+                            </label>
+                            {% if form.age_verified.errors %}
+                            <div class="text-danger">{{ form.age_verified.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.terms_accepted }}
+                            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                                {{ form.terms_accepted.label }}
+                            </label>
+                            {% if form.terms_accepted.errors %}
+                            <div class="text-danger">{{ form.terms_accepted.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                <a href="{% url 'core:terms' %}" target="_blank">Read Terms of Service</a> ·
+                                <a href="{% url 'core:privacy' %}" target="_blank">Privacy Policy</a>
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                    <hr>
+                    <p class="text-center mb-0">Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update selection visual feedback
+function updateSelection() {
+    const cards = document.querySelectorAll('.user-type-card');
+    cards.forEach(card => {
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio.checked) {
+            if (radio.value === 'client') {
+                card.style.background = 'rgba(102, 126, 234, 0.3)';
+                card.style.borderColor = '#667eea';
+                card.style.borderWidth = '2px';
+            } else {
+                card.style.background = 'rgba(245, 87, 108, 0.3)';
+                card.style.borderColor = '#f5576c';
+                card.style.borderWidth = '2px';
+            }
+        } else {
+            if (radio.value === 'client') {
+                card.style.background = 'rgba(102, 126, 234, 0.1)';
+            } else {
+                card.style.background = 'rgba(245, 87, 108, 0.1)';
+            }
+            card.style.borderWidth = '1px';
+        }
+    });
+}
+
+// Password strength indicator
+document.addEventListener('DOMContentLoaded', function() {
+    // Make entire card clickable
+    document.querySelectorAll('.user-type-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                updateSelection();
+            }
+        });
+    });
+    
+    // Add event listeners to radio buttons
+    document.querySelectorAll('input[name="user_type"]').forEach(radio => {
+        radio.addEventListener('change', updateSelection);
+    });
+    
+    // Initialize selection feedback
+    updateSelection();
+    const passwordInput = document.getElementById('id_password1');
+    const strengthDiv = document.getElementById('password-strength');
+    
+    if (passwordInput && strengthDiv) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let strengthText = '';
+            let strengthColor = '';
+            
+            // Check password strength
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // Determine strength level
+            if (strength === 0) {
+                strengthText = '';
+                strengthColor = '';
+            } else if (strength <= 2) {
+                strengthText = 'Weak';
+                strengthColor = '#dc3545';
+            } else if (strength <= 3) {
+                strengthText = 'Medium';
+                strengthColor = '#ffc107';
+            } else if (strength <= 4) {
+                strengthText = 'Strong';
+                strengthColor = '#28a745';
+            } else {
+                strengthText = 'Very Strong';
+                strengthColor = '#20c997';
+            }
+            
+            // Display strength indicator
+            if (password.length > 0) {
+                strengthDiv.innerHTML = `
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: ${(strength / 5) * 100}%; background-color: ${strengthColor};" 
+                             aria-valuenow="${strength}" aria-valuemin="0" aria-valuemax="5">
+                        </div>
+                    </div>
+                    <small style="color: ${strengthColor};">${strengthText}</small>
+                `;
+            } else {
+                strengthDiv.innerHTML = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

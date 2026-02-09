@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mali Safi Escorts{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'favicon.png' %}">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'core:home' %}">
+                <i class="bi bi-fire"></i> Mali Safi Escorts
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:home' %}">Home</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    {% if user.user_type == 'client' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connections:browse' %}"><i class="bi bi-heart"></i> Browse Escorts</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connections:messages_list' %}"><i class="bi bi-chat-dots"></i> Messages</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connections:connections_list' %}"><i class="bi bi-people"></i> Connections</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Subscribe</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:register' %}"><i class="bi bi-heart"></i> Find Escorts</a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'content:list' %}"><i class="bi bi-images"></i> Gallery</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'connections:my_profile' %}">My Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'connections:connections_list' %}">Connections</a></li>
+                            <li><a class="dropdown-item" href="{% url 'connections:messages_list' %}">Messages</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if user.has_premium_access %}
+                            <li><a class="dropdown-item text-success" href="{% url 'subscriptions:manage' %}"><i class="bi bi-check-circle-fill"></i> Premium Active</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Upgrade to Premium</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'subscriptions:manage' %}"><i class="bi bi-credit-card"></i> Manage Subscription</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'content:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                            <li><a class="dropdown-item" href="{% url 'content:bookmarks' %}"><i class="bi bi-bookmark-fill"></i> Bookmarks</a></li>
+                            <li><a class="dropdown-item" href="{% url 'content:watch_history' %}"><i class="bi bi-clock-history"></i> Watch History</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Account Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Mali Safi Escorts</h5>
+                    <p class="text-muted">Premium escort and hookup platform - Connect with verified escorts</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="mb-2">
+                        <a href="{% url 'core:terms' %}" class="text-muted me-3">Terms</a>
+                        <a href="{% url 'core:privacy' %}" class="text-muted me-3">Privacy</a>
+                        <a href="{% url 'core:dmca' %}" class="text-muted me-3">DMCA</a>
+                        <a href="{% url 'core:compliance_2257' %}" class="text-muted">2257</a>
+                    </div>
+                    <p class="text-muted mb-0">&copy; 2025 All rights reserved</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

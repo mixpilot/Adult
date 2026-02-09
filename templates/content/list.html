@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Content - Adult Entertainment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'content:list' %}">
+                        <div class="mb-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" value="{{ search_query }}" placeholder="Search...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>
+                                    {{ cat.name }} ({{ cat.content_count }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tags</label>
+                            <select name="tag" class="form-select">
+                                <option value="">All Tags</option>
+                                {% for tag in tags %}
+                                <option value="{{ tag.slug }}" {% if current_tag == tag.slug %}selected{% endif %}>
+                                    {{ tag.name }} ({{ tag.content_count }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Content Type</label>
+                            <select name="content_type" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="video" {% if current_content_type == 'video' %}selected{% endif %}>Video</option>
+                                <option value="image" {% if current_content_type == 'image' %}selected{% endif %}>Image</option>
+                                <option value="gallery" {% if current_content_type == 'gallery' %}selected{% endif %}>Gallery</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Premium Status</label>
+                            <select name="premium" class="form-select">
+                                <option value="">All Content</option>
+                                <option value="true" {% if current_premium_filter == 'true' %}selected{% endif %}>Premium Only</option>
+                                <option value="false" {% if current_premium_filter == 'false' %}selected{% endif %}>Free Only</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sort By</label>
+                            <select name="order_by" class="form-select">
+                                <option value="-created_at" {% if current_order_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                                <option value="created_at" {% if current_order_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                <option value="-views" {% if current_order_by == '-views' %}selected{% endif %}>Most Viewed</option>
+                                <option value="views" {% if current_order_by == 'views' %}selected{% endif %}>Least Viewed</option>
+                                <option value="-likes" {% if current_order_by == '-likes' %}selected{% endif %}>Most Liked</option>
+                                <option value="likes" {% if current_order_by == 'likes' %}selected{% endif %}>Least Liked</option>
+                                <option value="title" {% if current_order_by == 'title' %}selected{% endif %}>Title A-Z</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="{% url 'content:list' %}" class="btn btn-secondary w-100 mt-2">Reset</a>
+                        {% if user.is_authenticated %}
+                        <hr>
+                        <a href="{% url 'content:bookmarks' %}" class="btn btn-outline-warning w-100 mb-2">
+                            <i class="bi bi-bookmark-fill"></i> My Bookmarks
+                        </a>
+                        <a href="{% url 'content:watch_history' %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-clock-history"></i> Watch History
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Browse Content</h2>
+                {% if user.is_authenticated %}
+                <a href="{% url 'content:upload' %}" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Upload Content
+                </a>
+                {% endif %}
+            </div>
+
+            {% if page_obj %}
+            <div class="row g-4">
+                {% for content in page_obj %}
+                <div class="col-md-3 col-sm-4 col-6">
+                    <div class="content-card">
+                        <a href="{% url 'content:detail' content.slug %}">
+                            <div class="content-thumbnail">
+                                <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" class="img-fluid">
+                                <div class="content-overlay">
+                                    <span class="content-type-badge">{{ content.content_type|upper }}</span>
+                                    {% if content.is_premium %}
+                                    <span class="premium-badge">PREMIUM</span>
+                                    {% endif %}
+                                    {% if user.is_authenticated and content.id in bookmarked_ids %}
+                                    <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">
+                                        <i class="bi bi-bookmark-fill"></i>
+                                    </span>
+                                    {% endif %}
+                                    <div class="content-stats">
+                                        <span><i class="bi bi-eye"></i> {{ content.views }}</span>
+                                        <span><i class="bi {% if content.id in liked_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i> {{ content.likes }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <h6 class="content-title mt-2">{{ content.title|truncatewords:5 }}</h6>
+                            {% if content.category %}
+                            <small class="text-muted">{{ content.category.name }}</small>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if current_content_type %}&content_type={{ current_content_type }}{% endif %}{% if current_premium_filter %}&premium={{ current_premium_filter }}{% endif %}{% if current_order_by %}&order_by={{ current_order_by }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if current_content_type %}&content_type={{ current_content_type }}{% endif %}{% if current_premium_filter %}&premium={{ current_premium_filter }}{% endif %}{% if current_order_by %}&order_by={{ current_order_by }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if current_content_type %}&content_type={{ current_content_type }}{% endif %}{% if current_premium_filter %}&premium={{ current_premium_filter }}{% endif %}{% if current_order_by %}&order_by={{ current_order_by }}{% endif %}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No content found. Try adjusting your filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

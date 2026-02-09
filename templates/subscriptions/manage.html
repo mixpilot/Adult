@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Subscription{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Manage Subscription</h1>
+
+    {% if subscription %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Current Subscription</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Plan:</strong> {{ subscription.plan.name }}</p>
+                    <p><strong>Billing Period:</strong> {{ subscription.billing_period|title }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if subscription.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ subscription.status|title }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Current Period:</strong> 
+                        {{ subscription.current_period_start|date:"M d, Y" }} - 
+                        {{ subscription.current_period_end|date:"M d, Y" }}
+                    </p>
+                    {% if subscription.trial_end %}
+                    <p><strong>Trial Ends:</strong> {{ subscription.trial_end|date:"M d, Y" }}</p>
+                    {% endif %}
+                    <p><strong>Auto-Renew:</strong> 
+                        {% if subscription.auto_renew %}
+                        <span class="text-success">Yes</span>
+                        {% else %}
+                        <span class="text-danger">No</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Actions</h5>
+        </div>
+        <div class="card-body">
+            {% if subscription.is_active and subscription.auto_renew %}
+            <form method="post" action="{% url 'subscriptions:cancel' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                    Cancel Subscription
+                </button>
+            </form>
+            <p class="text-muted mt-2">
+                <small>Your subscription will remain active until {{ subscription.current_period_end|date:"F d, Y" }}.</small>
+            </p>
+            {% else %}
+            <a href="{% url 'subscriptions:plans' %}" class="btn btn-primary">Upgrade or Renew</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5>No Active Subscription</h5>
+        <p>You don't have an active subscription. Choose a plan to get started!</p>
+        <a href="{% url 'subscriptions:plans' %}" class="btn btn-primary">View Plans</a>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Payment History</h5>
+        </div>
+        <div class="card-body">
+            {% if subscription %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in subscription.payments.all|slice:":10" %}
+                        <tr>
+                            <td>{{ payment.created_at|date:"M d, Y" }}</td>
+                            <td>KSh {{ payment.amount|floatformat:0 }}</td>
+                            <td>
+                                <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ payment.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ payment.payment_method|title }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No payment history</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No payment history available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

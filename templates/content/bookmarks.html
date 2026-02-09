@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookmarks - Adult Entertainment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-bookmark-fill text-warning"></i> My Bookmarks</h2>
+        <a href="{% url 'content:list' %}" class="btn btn-primary">Browse More Content</a>
+    </div>
+
+    {% if page_obj %}
+    <div class="row g-4">
+        {% for content in page_obj %}
+        <div class="col-md-3 col-sm-4 col-6">
+            <div class="content-card">
+                <a href="{% url 'content:detail' content.slug %}">
+                    <div class="content-thumbnail">
+                        <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" class="img-fluid">
+                        <div class="content-overlay">
+                            <span class="content-type-badge">{{ content.content_type|upper }}</span>
+                            {% if content.is_premium %}
+                            <span class="premium-badge">PREMIUM</span>
+                            {% endif %}
+                            <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">
+                                <i class="bi bi-bookmark-fill"></i>
+                            </span>
+                            <div class="content-stats">
+                                <span><i class="bi bi-eye"></i> {{ content.views }}</span>
+                                <span><i class="bi bi-heart"></i> {{ content.likes }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="content-title mt-2">{{ content.title|truncatewords:5 }}</h6>
+                    {% if content.category %}
+                    <small class="text-muted">{{ content.category.name }}</small>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-bookmark display-4 d-block mb-3"></i>
+        <h4>No Bookmarks Yet</h4>
+        <p class="mb-0">Start bookmarking content you like to find them easily later!</p>
+        <a href="{% url 'content:list' %}" class="btn btn-primary mt-3">Browse Content</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

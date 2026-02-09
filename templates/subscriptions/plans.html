@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscription Plans{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if is_new_user %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Welcome to Mali Safi Escorts!</h4>
+        <p class="mb-0">Your account has been created successfully. Please select a payment package below to unlock all features and start connecting.</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Choose Your Plan</h1>
+        {% if user_type == 'client' %}
+        <p class="lead">Premium plans for clients looking for escorts</p>
+        {% elif user_type == 'escort' %}
+        <p class="lead">Premium plans for escorts providing services</p>
+        {% endif %}
+    </div>
+
+    <!-- User Type Info -->
+    <div class="alert alert-info mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <strong><i class="bi bi-info-circle"></i> Your Account Type:</strong>
+                {% if user_type == 'client' %}
+                <span class="badge bg-primary ms-2">Client - Looking for Escorts</span>
+                {% elif user_type == 'escort' %}
+                <span class="badge bg-success ms-2">Escort - Providing Services</span>
+                {% endif %}
+            </div>
+            <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-gear"></i> Change Account Type
+            </a>
+        </div>
+    </div>
+
+    {% if current_subscription %}
+    <div class="alert alert-info mb-4">
+        <h5><i class="bi bi-info-circle"></i> Current Subscription</h5>
+        <p class="mb-0">
+            You are currently subscribed to <strong>{{ current_subscription.plan.name }}</strong>
+            ({{ current_subscription.billing_period|title }}).
+            {% if current_subscription.is_active %}
+            Expires: {{ current_subscription.current_period_end|date:"F d, Y" }}
+            {% endif %}
+            <a href="{% url 'subscriptions:manage' %}" class="btn btn-sm btn-outline-primary ms-2">Manage</a>
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {% for plan in plans %}
+        <div class="col-md-3">
+            <div class="card h-100 {% if plan.tier == 'premium' %}border-warning{% elif plan.tier == 'vip' %}border-danger{% endif %}">
+                {% if plan.tier == 'premium' %}
+                <div class="card-header bg-warning text-dark text-center">
+                    <strong>MOST POPULAR</strong>
+                </div>
+                {% elif plan.tier == 'vip' %}
+                <div class="card-header bg-danger text-white text-center">
+                    <strong>VIP</strong>
+                </div>
+                {% else %}
+                <div class="card-header bg-secondary text-white text-center">
+                    <strong>{{ plan.name|upper }}</strong>
+                </div>
+                {% endif %}
+                
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ plan.name }}</h3>
+                    <div class="mb-3">
+                        <span class="display-4 fw-bold">KSh {{ plan.price_monthly|floatformat:0 }}</span>
+                        <span class="text-muted">/month</span>
+                    </div>
+                    
+                    {% if plan.price_quarterly %}
+                    <p class="text-muted small">Quarterly: KSh {{ plan.price_quarterly|floatformat:0 }}/3 months</p>
+                    {% endif %}
+                    {% if plan.price_yearly %}
+                    <p class="text-muted small">Yearly: KSh {{ plan.price_yearly|floatformat:0 }}/year</p>
+                    {% endif %}
+                    
+                    <p class="text-muted">{{ plan.description }}</p>
+                    
+                    <hr>
+                    
+                    <ul class="list-unstyled text-start">
+                        {% if user_type == 'client' or plan.user_type == 'both' %}
+                            <!-- Client Features -->
+                            {% if plan.unlimited_messaging %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Messaging</li>
+                            {% endif %}
+                            {% if plan.unlimited_content_access %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Content Access</li>
+                            {% endif %}
+                            {% if plan.ad_free %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Ad-Free Experience</li>
+                            {% endif %}
+                            {% if plan.advanced_search %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Advanced Search</li>
+                            {% endif %}
+                            {% if plan.priority_support %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Priority Support</li>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if user_type == 'escort' or plan.user_type == 'both' %}
+                            <!-- Escort Features -->
+                            {% if plan.featured_listing %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Featured Listing</li>
+                            {% endif %}
+                            {% if plan.profile_verification_badge %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Verified Badge</li>
+                            {% endif %}
+                            {% if plan.unlimited_photos %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Photos</li>
+                            {% endif %}
+                            {% if plan.priority_ranking %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Priority Ranking</li>
+                            {% endif %}
+                            {% if plan.earnings_tracking %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Earnings Dashboard</li>
+                            {% endif %}
+                            {% if plan.creator_earnings %}
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Creator Earnings</li>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Max Upload: {{ plan.max_upload_size }}MB</li>
+                    </ul>
+                </div>
+                
+                <div class="card-footer bg-transparent border-0 text-center pb-3">
+                    {% if current_subscription and current_subscription.plan.id == plan.id %}
+                    <button class="btn btn-secondary w-100" disabled>Current Plan</button>
+                    {% else %}
+                    <a href="{% url 'subscriptions:review_subscription' %}?plan={{ plan.id }}" class="btn btn-primary w-100">
+                        {% if plan.tier == 'free' %}Get Started{% else %}Subscribe{% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if other_plans %}
+    <div class="mt-5">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-arrow-repeat"></i> Looking for {{ other_type|title }} Plans?</h5>
+            </div>
+            <div class="card-body">
+                <p>If you want to switch to {% if other_type == 'escort' %}providing escort services{% else %}looking for escorts{% endif %}, you can view plans for {{ other_type }}s.</p>
+                <a href="{% url 'accounts:profile' %}" class="btn btn-info">
+                    <i class="bi bi-gear"></i> Change Account Type to {{ other_type|title }}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-5">
+        <p class="text-muted">
+            <i class="bi bi-phone"></i> Pay via Mobile Money (M-Pesa, Airtel Money, MTN, etc.)
+            <br>
+            <small>Cancel anytime. Secure mobile payment processing.</small>
+        </p>
+    </div>
+</div>
+{% endblock %}
