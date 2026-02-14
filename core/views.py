@@ -109,6 +109,19 @@ def home(request):
     
     # Testimonials (featured and approved)
     testimonials = Testimonial.objects.filter(is_approved=True, is_featured=True)[:6]
+
+    # Available escorts: user_type=escort and verified (User.is_verified OR profile is/id/phone verified)
+    # Photo optional so escorts marked Verified in admin show even before they upload a photo
+    available_escorts = User.objects.filter(
+        user_type='escort',
+        hookup_profile__isnull=False,
+        hookup_profile__hide_from_search=False,
+    ).filter(
+        Q(is_verified=True) |
+        Q(hookup_profile__is_verified=True) |
+        Q(hookup_profile__id_verified=True) |
+        Q(hookup_profile__phone_verified=True)
+    ).select_related('hookup_profile').distinct()[:12]
     
     # Live activity feed - ONLY for admin dashboard (privacy: don't show other users' activities to regular users)
     recent_activities = None  # Only admins should see this
@@ -136,6 +149,7 @@ def home(request):
         'top_creators': top_creators,
         'fastest_growing_creators': fastest_growing_creators,
         'testimonials': testimonials,
+        'available_escorts': available_escorts,
         'total_content': total_content,
         'total_users': total_users,
         'total_matches': total_matches,

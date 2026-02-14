@@ -30,7 +30,6 @@ def register_view(request):
 
 
 @require_http_methods(["GET", "POST"])
-@rate_limit(max_requests=10, period=300, key_prefix='login')
 def login_view(request):
     """User login view."""
     if request.method == 'POST':

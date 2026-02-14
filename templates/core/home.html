@@ -26,6 +26,45 @@
         </div>
     </div>
 
+    <!-- Available Escorts (guests: Connect → login/register) -->
+    <section class="mb-5">
+        <h2 class="mb-4"><i class="bi bi-heart text-danger"></i> Available Escorts</h2>
+        {% if available_escorts %}
+        <div class="row g-4">
+            {% for escort in available_escorts %}
+            <div class="col-md-3 col-sm-4 col-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-img-top position-relative" style="height: 200px; overflow: hidden; background: #f0dce2;">
+                        {% if escort.profile_photos.first %}
+                        <img src="{{ escort.profile_photos.first.photo.url }}" alt="{{ escort.username }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 text-muted"><i class="bi bi-person-circle display-4"></i></div>
+                        {% endif %}
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">Verified</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title mb-1">{{ escort.username }}</h6>
+                        <p class="card-text small text-muted mb-2">
+                            {% if escort.hookup_profile.age %}{{ escort.hookup_profile.age }} yrs{% endif %}
+                            {% if escort.hookup_profile.city %} · {{ escort.hookup_profile.city }}{% endif %}
+                        </p>
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:login' %}?next={% url 'connections:user_profile' escort.id %}" class="btn btn-primary btn-sm mt-auto">
+                            <i class="bi bi-heart"></i> Connect / Hook up
+                        </a>
+                        <p class="small text-muted mb-0 mt-2">or <a href="{% url 'accounts:register' %}">Sign up free</a></p>
+                        {% else %}
+                        <a href="{% url 'connections:user_profile' escort.id %}" class="btn btn-primary btn-sm mt-auto">View profile</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">No verified escorts listed yet. Check back soon.</p>
+        {% endif %}
+    </section>
 
     <!-- Site Statistics -->
     {% comment %} <div class="row mb-5">

@@ -23,19 +23,18 @@ def browse_users(request):
     
     form = UserSearchForm(request.GET)
     
-    # Only show VERIFIED escorts with hookup profiles (mandatory verification)
+    # By default show all verified escorts (User.is_verified OR profile is/id/phone verified)
+    # Photo optional so verified escorts show even before uploading a photo
     users = User.objects.exclude(id=request.user.id).filter(
         user_type='escort',
         hookup_profile__isnull=False,
         hookup_profile__hide_from_search=False,
-    ).select_related('hookup_profile')
-    
-    # Enforce mandatory verification for escorts: must have phone verification AND at least one photo
-    users = users.filter(
-        hookup_profile__phone_verified=True
     ).filter(
-        hookup_profile__profile_photos__isnull=False
-    ).distinct()
+        Q(is_verified=True) |
+        Q(hookup_profile__is_verified=True) |
+        Q(hookup_profile__id_verified=True) |
+        Q(hookup_profile__phone_verified=True)
+    ).select_related('hookup_profile').distinct()
     
     # Filter by search criteria
     if form.is_valid():
@@ -87,6 +86,7 @@ def browse_users(request):
         
         if form.cleaned_data.get('verified_only'):
             users = users.filter(
+                Q(is_verified=True) |
                 Q(hookup_profile__is_verified=True) |
                 Q(hookup_profile__id_verified=True) |
                 Q(hookup_profile__phone_verified=True)
