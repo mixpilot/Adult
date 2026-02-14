@@ -53,7 +53,10 @@
                         <a class="nav-link" href="{% url 'connections:messages_list' %}"><i class="bi bi-chat-dots"></i> Messages</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'connections:connections_list' %}"><i class="bi bi-people"></i> Connections</a>
+                        <a class="nav-link" href="{% url 'connections:connections_list' %}">
+                            <i class="bi bi-people"></i> Connections
+                            {% if pending_connection_requests_count %}<span class="badge bg-danger ms-1">{{ pending_connection_requests_count }}</span>{% endif %}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Subscribe</a>

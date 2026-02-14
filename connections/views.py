@@ -324,12 +324,28 @@ def messages_list(request):
 @require_http_methods(["GET", "POST"])
 @rate_limit(max_requests=30, period=60, key_prefix='send_message')
 def chat(request, user_id):
-    """Chat with a specific user."""
+    """Chat with a specific user. Only allowed once connection is accepted (matched)."""
     other_user = get_object_or_404(User, id=user_id)
     
-    # Clients must be verified to message escorts
-    if request.user.is_client and not request.user.is_client_verified():
-        messages.warning(request, 'Please verify your account to message escorts. Phone verification is required.')
+    # Require a matched connection before messaging (both must have accepted)
+    is_matched = (
+        Connection.objects.filter(
+            from_user=request.user, to_user=other_user, status='matched'
+        ).exists()
+        or Connection.objects.filter(
+            from_user=other_user, to_user=request.user, status='matched'
+        ).exists()
+    )
+    if not is_matched:
+        messages.warning(
+            request,
+            'You can message after you connect and they accept. Send a connection request from their profile, then wait for them to accept.'
+        )
+        return redirect('connections:user_profile', user_id=user_id)
+    
+    # Clients must be verified to message escorts (User.is_verified e.g. after M-Pesa, or hookup_profile.phone_verified)
+    if request.user.is_client and not request.user.is_verified and not request.user.is_client_verified():
+        messages.warning(request, 'Please verify your account to message escorts. Subscribe or complete phone verification first.')
         return redirect('accounts:profile')
     
     if request.method == 'POST':

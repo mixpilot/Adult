@@ -322,13 +322,16 @@ def subscription_success(request):
 
 @login_required
 def manage_subscription(request):
-    """Manage user's subscription."""
+    """Manage user's subscription and payment history."""
     subscription = None
     if hasattr(request.user, 'subscription'):
         subscription = request.user.subscription
-    
+
+    payment_history = Payment.objects.filter(user=request.user).select_related('plan').order_by('-created_at')[:50]
+
     context = {
         'subscription': subscription,
+        'payment_history': payment_history,
     }
     return render(request, 'subscriptions/manage.html', context)
 
