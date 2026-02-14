@@ -6,18 +6,14 @@
 {% block extra_css %}
 <style>
     .escort-dashboard {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%);
         border-radius: 15px;
         padding: 40px;
         margin-bottom: 30px;
         color: white;
     }
 
-    .escort-dashboard h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
+    .escort-dashboard h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
 
     .earnings-stats {
         display: grid;
@@ -27,25 +23,27 @@
     }
 
     .earnings-box {
-        background: #2a2a2a;
+        background: #ffffff;
+        border: 1px solid #f0dce2;
         border-radius: 12px;
         padding: 25px;
-        border-left: 4px solid;
+        border-left: 4px solid #c41e3a;
         transition: all 0.3s ease;
     }
 
     .earnings-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        box-shadow: 0 10px 30px rgba(196, 30, 58, 0.2);
     }
 
     .earnings-box.success { border-left-color: #28a745; }
     .earnings-box.warning { border-left-color: #ffc107; }
     .earnings-box.info { border-left-color: #17a2b8; }
-    .earnings-box.danger { border-left-color: #f5576c; }
+    .earnings-box.danger { border-left-color: #e91e63; }
 
     .escort-section {
-        background: #2a2a2a;
+        background: #ffffff;
+        border: 1px solid #f0dce2;
         border-radius: 12px;
         padding: 25px;
         margin-bottom: 30px;
@@ -56,7 +54,7 @@
         font-weight: 600;
         margin-bottom: 20px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #3a3a3a;
+        border-bottom: 2px solid #f0dce2;
     }
 
     .quick-escort-actions {
@@ -67,7 +65,7 @@
     }
 
     .escort-action-btn {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%);
         border: none;
         border-radius: 10px;
         padding: 20px;
@@ -83,32 +81,15 @@
 
     .escort-action-btn:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+        box-shadow: 0 10px 30px rgba(196, 30, 58, 0.35);
         color: white;
     }
 
-    .escort-action-btn i {
-        font-size: 2rem;
-    }
+    .escort-action-btn i { font-size: 2rem; }
 
-    .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-        opacity: 0.8;
-    }
-
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
-        color: #aaa;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
+    .stat-icon { font-size: 2.5rem; margin-bottom: 15px; opacity: 0.9; }
+    .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+    .stat-label { font-size: 0.9rem; color: #6b4d5a; text-transform: uppercase; letter-spacing: 1px; }
 </style>
 {% endblock %}
 
@@ -234,7 +215,7 @@
     <div class="escort-section">
         <h3><i class="bi bi-cash-coin"></i> Recent Earnings</h3>
         <div class="table-responsive">
-            <table class="table table-dark table-hover">
+            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>Type</th>
@@ -333,7 +314,7 @@
         <h3><i class="bi bi-lightbulb"></i> Tips to Maximize Your Earnings</h3>
         <div class="row g-3">
             <div class="col-md-4">
-                <div class="card bg-dark">
+                <div class="card">
                     <div class="card-body">
                         <h5><i class="bi bi-camera"></i> Complete Your Profile</h5>
                         <p class="text-muted small">Add high-quality photos and a detailed bio to attract more clients.</p>
@@ -341,7 +322,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-dark">
+                <div class="card">
                     <div class="card-body">
                         <h5><i class="bi bi-star"></i> Go Premium</h5>
                         <p class="text-muted small">Get featured placement and verified badge to stand out from the crowd.</p>
@@ -349,7 +330,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-dark">
+                <div class="card">
                     <div class="card-body">
                         <h5><i class="bi bi-chat"></i> Respond Quickly</h5>
                         <p class="text-muted small">Quick responses increase your chances of making connections.</p>

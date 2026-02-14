@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete M-Pesa Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-4" id="mpesa-waiting" data-status-url="{% url 'payments:mpesa_status' payment.id %}">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-phone"></i> Complete payment on your phone</h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-phone display-1 text-primary mb-3"></i>
+                    <h3>M-Pesa prompt sent</h3>
+                    <p class="lead text-muted mb-4">
+                        We've sent a payment request to <strong>{{ payment.phone_number }}</strong>.
+                        Check your phone and enter your M-Pesa PIN to complete the payment.
+                    </p>
+                    <div class="alert alert-light border">
+                        <p class="mb-1"><strong>Amount:</strong> KSh {{ payment.amount|floatformat:0 }}</p>
+                        <p class="mb-0"><strong>Plan:</strong> {{ payment.plan.name }} ({{ payment.billing_period }})</p>
+                    </div>
+                    <p class="text-muted small mb-2">
+                        We check payment status every 15 seconds. Complete the payment on your phone and we’ll update this page automatically.
+                    </p>
+                    <p class="text-muted small mb-0" id="poll-status">Checking…</p>
+                    <div class="mt-4" id="action-buttons">
+                        <a href="{% url 'subscriptions:manage' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Check subscription status
+                        </a>
+                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                            <i class="bi bi-arrow-left"></i> Back to plans
+                        </a>
+                    </div>
+                    <div class="mt-3 d-none" id="failed-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var statusUrl = document.getElementById('mpesa-waiting').getAttribute('data-status-url');
+    var statusEl = document.getElementById('poll-status');
+    var failedEl = document.getElementById('failed-message');
+    var intervalMs = 15000;
+    var maxPolls = 40;
+    var pollCount = 0;
+    var timer;
+
+    function poll() {
+        if (pollCount >= maxPolls) {
+            statusEl.textContent = 'Taking longer than usual. Use the button below to check your subscription.';
+            if (timer) clearInterval(timer);
+            return;
+        }
+        pollCount += 1;
+        fetch(statusUrl, { method: 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.paid && data.status === 'completed') {
+                    statusEl.textContent = 'Payment confirmed! Redirecting…';
+                    if (timer) clearInterval(timer);
+                    window.location.href = '{% url "subscriptions:manage" %}';
+                    return;
+                }
+                if (data.status === 'failed') {
+                    statusEl.classList.add('d-none');
+                    failedEl.classList.remove('d-none');
+                    failedEl.className = 'mt-3 alert alert-danger';
+                    failedEl.textContent = data.message || 'Payment failed or was cancelled.';
+                    if (timer) clearInterval(timer);
+                    return;
+                }
+                statusEl.textContent = data.message || ('Waiting for payment… (check ' + pollCount + ')');
+                if (data.rate_limit && timer) {
+                    clearInterval(timer);
+                    intervalMs = 20000;
+                    timer = setInterval(poll, intervalMs);
+                }
+            })
+            .catch(function() {
+                statusEl.textContent = 'Checking… (attempt ' + pollCount + ')';
+            });
+    }
+
+    // First poll after 15s to avoid Daraja rate limit (5 req/min; subscribe already used 2)
+    setTimeout(function() {
+        poll();
+        timer = setInterval(poll, intervalMs);
+    }, 15000);
+})();
+</script>
+{% endblock %}

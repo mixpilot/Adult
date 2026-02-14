@@ -13,6 +13,7 @@ class SubscriptionPlan(models.Model):
         ('basic', 'Basic'),
         ('premium', 'Premium'),
         ('vip', 'VIP'),
+        ('once', 'One Time Access'),
     ]
     
     USER_TYPE_CHOICES = [
@@ -68,11 +69,18 @@ class SubscriptionPlan(models.Model):
     
     def get_price(self, billing_period='monthly'):
         """Get price for specific billing period."""
+        if billing_period == 'once':
+            return self.price_monthly  # One-time plans use price_monthly as the single payment
         if billing_period == 'quarterly':
             return self.price_quarterly or (self.price_monthly * 3 * Decimal('0.9'))  # 10% discount
         elif billing_period == 'yearly':
             return self.price_yearly or (self.price_monthly * 12 * Decimal('0.8'))  # 20% discount
         return self.price_monthly
+
+    @property
+    def is_one_time_plan(self):
+        """True if this plan is one-time access only (no monthly renewal)."""
+        return self.tier == 'once'
 
 
 class Subscription(models.Model):
@@ -89,6 +97,7 @@ class Subscription(models.Model):
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
         ('yearly', 'Yearly'),
+        ('once', 'One Time'),
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')

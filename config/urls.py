@@ -13,6 +13,7 @@ urlpatterns = [
     path('content/', include('content.urls')),
     path('connections/', include('connections.urls')),
     path('subscriptions/', include('subscriptions.urls')),
+    path('payments/', include('payments.urls')),
 ]
 
 if settings.DEBUG:

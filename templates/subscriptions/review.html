@@ -100,7 +100,18 @@
                     <!-- Billing Period Selection -->
                     <form method="get" action="{% url 'subscriptions:review_subscription' %}" id="reviewForm">
                         <input type="hidden" name="plan" value="{{ plan.id }}">
-                        
+                        {% if is_one_time_plan %}
+                        <input type="hidden" name="billing_period" value="once">
+                        <div class="mb-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center py-4">
+                                    <h5 class="text-success"><i class="bi bi-check2-circle"></i> One-time payment</h5>
+                                    <h3 class="mb-0">KSh {{ final_price|floatformat:0 }}</h3>
+                                    <p class="text-muted mb-0">30 days full access · No renewal</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
                         <div class="mb-4">
                             <h5 class="mb-3">Select Billing Period</h5>
                             <div class="row g-3">
@@ -146,6 +157,7 @@
                                 {% endif %}
                             </div>
                         </div>
+                        {% endif %}
 
                         <!-- Promo Code -->
                         <div class="mb-4">
@@ -169,7 +181,7 @@
                             <h5 class="mb-3">Order Summary</h5>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Plan:</span>
-                                <strong>{{ plan.name }} ({{ billing_period|title }})</strong>
+                                <strong>{{ plan.name }} ({% if billing_period == 'once' %}One-time{% else %}{{ billing_period|title }}{% endif %})</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Base Price:</span>
@@ -189,8 +201,8 @@
                         </div>
                     </div>
 
-                    <!-- Payment Form -->
-                    <form method="post" action="{% url 'subscriptions:subscribe' %}">
+                    <!-- Payment Form: POSTs to subscribe view to trigger M-Pesa STK push -->
+                    <form id="paymentForm" method="post" action="{% url 'subscriptions:subscribe' %}">
                         {% csrf_token %}
                         <input type="hidden" name="plan" value="{{ plan.id }}">
                         <input type="hidden" name="billing_period" value="{{ billing_period }}">
@@ -199,48 +211,54 @@
                         {% endif %}
                         
                         <h5 class="mb-3">Payment Details</h5>
+
+                        <div class="alert alert-success mb-3">
+                            <strong><i class="bi bi-phone"></i> M-Pesa (recommended)</strong> – We’ll send a payment prompt to your phone. Enter your PIN and you’re done. No USSD or Pay Bill steps.
+                        </div>
                         
                         <div class="mb-3">
                             <label class="form-label"><strong>Payment Method</strong></label>
                             <div class="row g-2">
                                 <div class="col-md-6">
-                                    <div class="form-check">
+                                    <div class="form-check border rounded p-3 {% if request.GET.payment != 'other' %}border-primary{% endif %}">
                                         <input class="form-check-input" type="radio" name="payment_method" id="mpesa" value="mpesa" checked>
-                                        <label class="form-check-label" for="mpesa">M-Pesa</label>
+                                        <label class="form-check-label fw-bold" for="mpesa">
+                                            <i class="bi bi-phone text-success"></i> M-Pesa (prompt on phone)
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check">
+                                    <div class="form-check border rounded p-3">
                                         <input class="form-check-input" type="radio" name="payment_method" id="airtel" value="airtel_money">
                                         <label class="form-check-label" for="airtel">Airtel Money</label>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
+                                {% comment %} <div class="col-md-6">
+                                    <div class="form-check border rounded p-3">
                                         <input class="form-check-input" type="radio" name="payment_method" id="mtn" value="mtn_mobile_money">
                                         <label class="form-check-label" for="mtn">MTN Mobile Money</label>
                                     </div>
-                                </div>
+                                </div> {% endcomment %}
                                 <div class="col-md-6">
-                                    <div class="form-check">
+                                    <div class="form-check border rounded p-3">
                                         <input class="form-check-input" type="radio" name="payment_method" id="other" value="mobile_money">
-                                        <label class="form-check-label" for="other">Other Mobile Money</label>
+                                        <label class="form-check-label" for="other">Other (Pay Bill)</label>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="phone_number" class="form-label"><strong>Phone Number</strong></label>
-                            <input type="text" class="form-control" id="phone_number" name="phone_number" 
-                                   placeholder="e.g., 0712345678" pattern="[0-9+\-\s()]+" required
+                            <label for="phone_number" class="form-label"><strong>M-Pesa / Mobile Money phone number</strong></label>
+                            <input type="text" class="form-control form-control-lg" id="phone_number" name="phone_number" 
+                                   placeholder="e.g. 0712345678 or 254712345678" pattern="[0-9+\-\s()]+" required
                                    value="{% if user.phone_number %}{{ user.phone_number }}{% endif %}">
-                            <small class="form-text text-muted">Enter your mobile money phone number</small>
+                            <small class="form-text text-muted">We’ll send the payment request to this number. Use 07... or 254...</small>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-arrow-right"></i> Proceed to Payment
+                            <button type="submit" form="paymentForm" class="btn btn-primary btn-lg" name="pay_mpesa" value="1">
+                                <i class="bi bi-phone"></i> Pay KSh {{ final_price|floatformat:0 }} with M-Pesa
                             </button>
                             <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Back to Plans

@@ -177,8 +177,8 @@ def home(request):
             from subscriptions.models import CreatorEarning, Tip
             from connections.models import Visit, Message
             
-            # Check verification status
-            is_verified = request.user.is_escort_verified()
+            # Verification banner: use User.is_verified (admin sets this when user is verified)
+            is_verified = request.user.is_verified
             needs_verification = not is_verified
             
             escort_context = {
@@ -212,8 +212,8 @@ def home(request):
             return render(request, 'core/home_escort.html', escort_context)
         # Client dashboard (default)
         else:
-            # Check client verification status
-            is_client_verified = request.user.is_client_verified()
+            # Verification banner: use User.is_verified (admin sets this when user is verified)
+            is_client_verified = request.user.is_verified
             needs_verification = not is_client_verified
             
             client_context = {

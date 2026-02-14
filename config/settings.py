@@ -8,6 +8,12 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env (project root)
+_env_file = BASE_DIR / '.env'
+if _env_file.exists():
+    from dotenv import load_dotenv
+    load_dotenv(_env_file)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -36,6 +42,7 @@ INSTALLED_APPS = [
     'core',
     'connections',
     'subscriptions',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -181,12 +188,37 @@ SUBSCRIPTION_TRIAL_DAYS = 7  # 7-day free trial
 TOKEN_PRICE = 13.00  # KSh 13.00 per token (approximately $0.10)
 CREATOR_REVENUE_SHARE = 70  # 70% to creator, 30% to platform
 
-# Django Unfold Configuration
+# M-Pesa (Daraja API) – STK Push / prompt only
+MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')  # sandbox | production
+MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', '')
+MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', '')
+MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '')  # Till or Paybill
+MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
+# Base URL for callbacks (must be HTTPS in production). Daraja will POST to {MPESA_CALLBACK_BASE_URL}/payments/mpesa/callback/
+MPESA_CALLBACK_BASE_URL = os.environ.get('MPESA_CALLBACK_BASE_URL', 'https://yourdomain.com')
+
+# Django Unfold Configuration – light theme, red/valentine colours
 UNFOLD = {
     "SITE_TITLE": "Mali Safi Escorts Admin",
     "SITE_HEADER": "Mali Safi Escorts",
     "SITE_URL": "/",
-    "SITE_SYMBOL": "settings",
+    "SITE_SYMBOL": "favorite",  # heart-style icon
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
+    "THEME": "light",
+    "COLORS": {
+        "primary": {
+            "50": "oklch(0.98 0.02 15)",
+            "100": "oklch(0.94 0.05 18)",
+            "200": "oklch(0.88 0.10 18)",
+            "300": "oklch(0.80 0.16 18)",
+            "400": "oklch(0.68 0.22 18)",
+            "500": "oklch(0.58 0.24 18)",
+            "600": "oklch(0.50 0.22 18)",
+            "700": "oklch(0.42 0.20 18)",
+            "800": "oklch(0.34 0.16 18)",
+            "900": "oklch(0.26 0.12 18)",
+            "950": "oklch(0.18 0.08 18)",
+        },
+    },
 }

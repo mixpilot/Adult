@@ -28,7 +28,7 @@
 
 
     <!-- Site Statistics -->
-    <div class="row mb-5">
+    {% comment %} <div class="row mb-5">
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center stats-card">
                 <div class="card-body">
@@ -61,7 +61,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> {% endcomment %}
 
     <!-- Premium Countdown Banner -->
     {% if not user.is_authenticated or not user.is_staff %}
@@ -80,9 +80,9 @@
     {% endif %}
 
     <!-- Trending This Hour -->
-    {% if trending_this_hour %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-fire text-danger"></i> Trending This Hour 🔥</h2>
+        {% if trending_this_hour %}
         <div class="row g-4">
             {% for content in trending_this_hour %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -104,13 +104,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No trending content in the last hour. Check back soon or browse latest content below.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Trending Right Now Section (24h) -->
-    {% if trending_content %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-fire text-danger"></i> Trending Right Now 🔥</h2>
+        {% if trending_content %}
         <div class="row g-4">
             {% for content in trending_content|slice:":12" %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -132,13 +134,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No trending content in the last 24 hours yet.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Most Bookmarked -->
-    {% if most_bookmarked %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-bookmark-star-fill text-warning"></i> Most Bookmarked ⭐</h2>
+        {% if most_bookmarked %}
         <div class="row g-4">
             {% for content in most_bookmarked %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -160,16 +164,18 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No bookmarked content yet. Save items to see them here.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Premium Content (Blurred Previews) -->
-    {% if premium_content %}
     <section class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-lock-fill text-warning"></i> Premium Picks 🔒</h2>
             <a href="{% url 'core:premium' %}" class="btn btn-warning btn-sm">Unlock Premium</a>
         </div>
+        {% if premium_content %}
         <div class="row g-4">
             {% for content in premium_content|slice:":12" %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -196,8 +202,10 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No premium content yet. Upgrade to get exclusive access when available.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Dating & Match Teasers -->
     {% if user.is_authenticated and nearby_users_count %}
@@ -252,9 +260,9 @@
     {% endif %}
 
     <!-- Creator Spotlight -->
-    {% if top_creators %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-star-fill text-warning"></i> Creator Spotlight ⭐</h2>
+        {% if top_creators %}
         <div class="row g-4">
             {% for creator in top_creators %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -277,13 +285,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No creators yet. Content will appear here once creators upload.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Fastest Growing Creators -->
-    {% if fastest_growing_creators %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-graph-up-arrow text-success"></i> Fastest Growing Creators 📈</h2>
+        {% if fastest_growing_creators %}
         <div class="row g-4">
             {% for creator in fastest_growing_creators %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -306,13 +316,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">New creator activity will show here.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Smart Recommendations (Personalized) -->
-    {% if recommended_content %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-stars text-info"></i> Recommended For You ⭐</h2>
+        {% if recommended_content %}
         <div class="row g-4">
             {% for content in recommended_content %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -337,13 +349,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">Sign in and watch some content to get personalized recommendations.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Featured Content Carousel -->
-    {% if featured_slides %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-star-fill text-warning"></i> Featured Content</h2>
+        {% if featured_slides %}
         {% if featured_slides|length > 1 %}
         <div id="featuredCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
             <div class="carousel-inner">
@@ -405,13 +419,15 @@
             {% endfor %}
         </div>
         {% endif %}
+        {% else %}
+        <p class="text-muted">No featured content yet. Admins can mark content as featured in the dashboard.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Interactive Categories -->
-    {% if categories %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-grid"></i> Explore Categories</h2>
+        {% if categories %}
         <div class="row g-3">
             {% for category in categories %}
             <div class="col-md-3 col-sm-6">
@@ -438,13 +454,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No categories yet. Add categories in the admin to organize content.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Latest Content -->
-    {% if latest_content %}
     <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-clock"></i> Latest Content</h2>
+        {% if latest_content %}
         <div class="row g-4">
             {% for content in latest_content %}
             <div class="col-md-2 col-sm-4 col-6">
@@ -466,13 +484,15 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No content yet. Upload or approve content in the admin to see it here.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Testimonials Section -->
-    {% if testimonials %}
     <section class="mb-5">
         <h2 class="mb-4 text-center"><i class="bi bi-chat-quote-fill text-primary"></i> What Our Users Say 💬</h2>
+        {% if testimonials %}
         <div class="row g-4">
             {% for testimonial in testimonials %}
             <div class="col-md-4">
@@ -503,8 +523,10 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted text-center">No testimonials yet. User reviews will appear here.</p>
+        {% endif %}
     </section>
-    {% endif %}
 
     <!-- Premium CTA Footer -->
     {% if not user.is_authenticated %}
