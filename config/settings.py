@@ -19,12 +19,13 @@ if _env_file.exists():
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-change-this-in-production-!@#$%^&*()'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production-!@#$%^&*()')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+# Allowed hosts - update for production
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -80,12 +81,27 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use PostgreSQL/MySQL in production, SQLite for development
+if os.environ.get('DATABASE_NAME'):
+    # Production database (PostgreSQL or MySQL)
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DATABASE_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('DATABASE_NAME', ''),
+            'USER': os.environ.get('DATABASE_USER', ''),
+            'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
+            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+            'PORT': os.environ.get('DATABASE_PORT', '5432'),
+        }
     }
-}
+else:
+    # Development database (SQLite)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -146,7 +162,7 @@ LOGOUT_REDIRECT_URL = 'core:home'
 # Session Configuration
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds (default for "Remember Me")
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Allow set_expiry() to control expiry
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'  # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_SAVE_EVERY_REQUEST = False  # Don't save session on every request
 
@@ -191,12 +207,24 @@ CREATOR_REVENUE_SHARE = 70  # 70% to creator, 30% to platform
 
 # M-Pesa (Daraja API) – STK Push / prompt only
 MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')  # sandbox | production
-MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', '')
-MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', '')
-MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '')  # Till or Paybill
-MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
+# Daraja API Credentials (remove spaces when copying from portal)
+# Consumer Key from image: TGmqAz7jqABXKbkzDvnVHhxhqaExuS21pTz F7Bzab3uuiUwH (space removed)
+# Consumer Secret from image: ws93rCpBMO9EyUJr16LmGAyXA4bEYOGA3I WiPWaqosf66NsgRzBGgIN7weR6q4hQ (space removed)
+MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', 'TGmqAz7jqABXKbkzDvnVHhxhqaExuS21pTzF7Bzab3uuiUwH').strip().replace(' ', '')
+MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', 'ws93rCpBMO9EyUJr16LmGAyXA4bEY0GA3lWiPWaqosf66NsgRzBGglN7weR6q4hQ').strip().replace(' ', '')
+MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '174379')  # Test shortcode for sandbox
+MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')  # Test passkey for sandbox
 # Base URL for callbacks (must be HTTPS in production). Daraja will POST to {MPESA_CALLBACK_BASE_URL}/payments/mpesa/callback/
-MPESA_CALLBACK_BASE_URL = os.environ.get('MPESA_CALLBACK_BASE_URL', 'https://yourdomain.com')
+# For local testing, use ngrok: https://your-ngrok-url.ngrok.io
+# For sandbox testing, you can use a placeholder - the system will use status polling as fallback
+MPESA_CALLBACK_BASE_URL = os.environ.get('MPESA_CALLBACK_BASE_URL', 'https://sandbox.safaricom.co.ke')
+
+# Daraja API Settings (alternative naming for compatibility)
+DARAJACONSUMER_KEY = MPESA_CONSUMER_KEY
+DARAJACONSUMER_SECRET = MPESA_CONSUMER_SECRET
+DARAJASHORTCODE = MPESA_SHORTCODE
+DARAJAPASSKEY = MPESA_PASSKEY
+DARAJASANDBOX = (MPESA_ENV == 'sandbox')
 
 # Django Unfold Configuration – light theme, red/valentine colours
 UNFOLD = {
