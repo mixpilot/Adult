@@ -10,6 +10,7 @@ from core.decorators import age_verified_required, rate_limit, ajax_required
 from .models import UserProfile, ProfilePhoto, Connection, Message, Visit, UserReport
 from .forms import UserProfileForm, ProfilePhotoForm, MessageForm, UserSearchForm, UserReportForm
 from accounts.models import User
+from content.models import Content
 
 
 @login_required
@@ -151,6 +152,11 @@ def user_profile(request, user_id):
     # Get all profile photos
     profile_photos = ProfilePhoto.objects.filter(user=profile_user).order_by('is_primary', 'order', 'created_at')
 
+    # Content uploaded by this user (approved only, for escorts)
+    user_content = []
+    if profile_user.is_escort:
+        user_content = Content.objects.filter(uploader=profile_user, status='approved').order_by('-created_at')[:12]
+
     # Handle user report submission
     report_form = None
     if request.method == 'POST' and 'reason' in request.POST:
@@ -173,6 +179,7 @@ def user_profile(request, user_id):
         'has_reverse_connection': has_reverse_connection,
         'visit_count': visit_count,
         'profile_photos': profile_photos,
+        'user_content': user_content,
         'report_form': report_form,
     }
     return render(request, 'connections/user_profile.html', context)

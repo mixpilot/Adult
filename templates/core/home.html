@@ -119,7 +119,7 @@
     {% endif %}
 
     <!-- Trending This Hour -->
-    <section class="mb-5">
+    {% comment %} <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-fire text-danger"></i> Trending This Hour 🔥</h2>
         {% if trending_this_hour %}
         <div class="row g-4">
@@ -176,10 +176,10 @@
         {% else %}
         <p class="text-muted">No trending content in the last 24 hours yet.</p>
         {% endif %}
-    </section>
+    </section> {% endcomment %}
 
     <!-- Most Bookmarked -->
-    <section class="mb-5">
+    {% comment %} <section class="mb-5">
         <h2 class="mb-4"><i class="bi bi-bookmark-star-fill text-warning"></i> Most Bookmarked ⭐</h2>
         {% if most_bookmarked %}
         <div class="row g-4">
@@ -206,7 +206,7 @@
         {% else %}
         <p class="text-muted">No bookmarked content yet. Save items to see them here.</p>
         {% endif %}
-    </section>
+    </section> {% endcomment %}
 
     <!-- Premium Content (Blurred Previews) -->
     <section class="mb-5">
@@ -292,7 +292,7 @@
                 <h3 class="blurred-text">47+</h3>
                 <p class="lead">Verified escorts available now</p>
                 <p class="text-muted">Sign up to browse profiles and connect instantly</p>
-                <a href="{% url 'accounts:register' %}" class="btn btn-danger btn-lg"><i class="bi bi-heart"></i> Browse Escorts</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-danger btn-lg"><i class="bi bi-heart"></i> Hook Up with the finest Escorts</a>
             </div>
         </div>
     </section>
