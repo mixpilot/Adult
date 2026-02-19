@@ -1,0 +1,29 @@
+# Apache configuration for Django on HostAfrica
+# Place this file in your public_html directory
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Force HTTPS redirect (redirect HTTP to HTTPS)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Serve static files from staticfiles directory
+    RewriteRule ^static/(.*)$ staticfiles/$1 [L]
+    
+    # Serve media files
+    RewriteRule ^media/(.*)$ media/$1 [L]
+    
+    # Pass all other requests to Django via Passenger
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ passenger_wsgi.py/$1 [L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

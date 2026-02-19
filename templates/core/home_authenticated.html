@@ -5,26 +5,17 @@
 
 {% block extra_css %}
 <style>
-    /* Professional Dashboard Styles */
+    /* Light theme, red & valentine dashboard */
     .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%);
         border-radius: 15px;
         padding: 40px;
         margin-bottom: 30px;
         color: white;
     }
 
-    .dashboard-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .dashboard-header p {
-        font-size: 1.1rem;
-        opacity: 0.95;
-        margin-bottom: 0;
-    }
+    .dashboard-header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+    .dashboard-header p { font-size: 1.1rem; opacity: 0.95; margin-bottom: 0; }
 
     .quick-stats {
         display: grid;
@@ -34,45 +25,32 @@
     }
 
     .stat-box {
-        background: #2a2a2a;
+        background: #ffffff;
+        border: 1px solid #f0dce2;
         border-radius: 12px;
         padding: 25px;
-        border-left: 4px solid;
+        border-left: 4px solid #c41e3a;
         transition: all 0.3s ease;
     }
 
     .stat-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 10px 30px rgba(196, 30, 58, 0.2);
     }
 
-    .stat-box.primary { border-left-color: #667eea; }
+    .stat-box.primary { border-left-color: #c41e3a; }
     .stat-box.success { border-left-color: #28a745; }
     .stat-box.warning { border-left-color: #ffc107; }
     .stat-box.info { border-left-color: #17a2b8; }
-    .stat-box.danger { border-left-color: #dc3545; }
+    .stat-box.danger { border-left-color: #e91e63; }
 
-    .stat-box .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-        opacity: 0.8;
-    }
-
-    .stat-box .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-
-    .stat-box .stat-label {
-        font-size: 0.9rem;
-        color: #aaa;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
+    .stat-box .stat-icon { font-size: 2.5rem; margin-bottom: 15px; opacity: 0.9; }
+    .stat-box .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+    .stat-box .stat-label { font-size: 0.9rem; color: #6b4d5a; text-transform: uppercase; letter-spacing: 1px; }
 
     .dashboard-section {
-        background: #2a2a2a;
+        background: #ffffff;
+        border: 1px solid #f0dce2;
         border-radius: 12px;
         padding: 25px;
         margin-bottom: 30px;
@@ -83,7 +61,7 @@
         font-weight: 600;
         margin-bottom: 20px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #3a3a3a;
+        border-bottom: 2px solid #f0dce2;
     }
 
     .content-grid-dashboard {
@@ -96,97 +74,66 @@
         position: relative;
         border-radius: 10px;
         overflow: hidden;
-        background: #1a1a1a;
+        background: #fff5f7;
+        border: 1px solid #f0dce2;
         transition: all 0.3s ease;
         cursor: pointer;
     }
 
     .content-card-dashboard:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 25px rgba(196, 30, 58, 0.2);
     }
 
-    .content-card-dashboard .thumbnail {
-        position: relative;
-        padding-top: 56.25%;
-        overflow: hidden;
-    }
-
+    .content-card-dashboard .thumbnail { position: relative; padding-top: 56.25%; overflow: hidden; }
     .content-card-dashboard img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         object-fit: cover;
         transition: transform 0.3s ease;
     }
 
-    .content-card-dashboard:hover img {
-        transform: scale(1.1);
-    }
-
-    .content-card-dashboard .card-info {
-        padding: 12px;
-    }
-
+    .content-card-dashboard:hover img { transform: scale(1.1); }
+    .content-card-dashboard .card-info { padding: 12px; }
     .content-card-dashboard .card-title {
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin: 0;
-        line-height: 1.4;
-        color: #fff;
+        font-size: 0.9rem; font-weight: 500; margin: 0; line-height: 1.4;
+        color: #2d1f24;
     }
 
     .content-card-dashboard .card-stats {
-        display: flex;
-        gap: 15px;
-        margin-top: 8px;
-        font-size: 0.8rem;
-        color: #aaa;
+        display: flex; gap: 15px; margin-top: 8px; font-size: 0.8rem;
+        color: #6b4d5a;
     }
 
-    .activity-timeline {
-        max-height: 400px;
-        overflow-y: auto;
-    }
+    .activity-timeline { max-height: 400px; overflow-y: auto; }
 
     .timeline-item {
         display: flex;
         gap: 15px;
         padding: 15px;
-        border-left: 3px solid #3a3a3a;
+        border-left: 3px solid #f0dce2;
         margin-bottom: 15px;
+        background: #fff;
         transition: all 0.3s ease;
     }
 
     .timeline-item:hover {
-        background: rgba(255,255,255,0.05);
-        border-left-color: #667eea;
+        background: #fff5f7;
+        border-left-color: #c41e3a;
         padding-left: 20px;
     }
 
     .timeline-icon {
         font-size: 1.5rem;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 40px; height: 40px;
+        display: flex; align-items: center; justify-content: center;
         border-radius: 50%;
-        background: #3a3a3a;
+        background: #f0dce2;
+        color: #c41e3a;
         flex-shrink: 0;
     }
 
-    .timeline-content {
-        flex: 1;
-    }
-
-    .timeline-content .time {
-        font-size: 0.85rem;
-        color: #aaa;
-        margin-top: 5px;
-    }
+    .timeline-content { flex: 1; }
+    .timeline-content .time { font-size: 0.85rem; color: #6b4d5a; margin-top: 5px; }
 
     .quick-actions {
         display: grid;
@@ -196,7 +143,7 @@
     }
 
     .action-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%);
         border: none;
         border-radius: 10px;
         padding: 20px;
@@ -212,24 +159,18 @@
 
     .action-btn:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 10px 30px rgba(196, 30, 58, 0.35);
         color: white;
     }
 
-    .action-btn i {
-        font-size: 2rem;
-    }
-
-    .action-btn span {
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
+    .action-btn i { font-size: 2rem; }
+    .action-btn span { font-size: 0.9rem; font-weight: 500; }
 
     .recommendations-badge {
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(102, 126, 234, 0.9);
+        background: rgba(196, 30, 58, 0.9);
         color: white;
         padding: 5px 10px;
         border-radius: 20px;
@@ -237,17 +178,8 @@
         font-weight: 600;
     }
 
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #aaa;
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        opacity: 0.5;
-    }
+    .empty-state { text-align: center; padding: 60px 20px; color: #6b4d5a; }
+    .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
 </style>
 {% endblock %}
 
@@ -328,7 +260,7 @@
             <span>My Profile</span>
         </a>
         {% if not user.has_premium_access %}
-        <a href="{% url 'subscriptions:plans' %}" class="action-btn" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border: none;">
+        <a href="{% url 'subscriptions:plans' %}" class="action-btn" style="background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%); border: none;">
             <i class="bi bi-star-fill"></i>
             <span>Subscribe</span>
         </a>
@@ -337,16 +269,18 @@
             <i class="bi bi-images"></i>
             <span>Gallery</span>
         </a>
+        {% if user.is_escort %}
         <a href="{% url 'content:upload' %}" class="action-btn">
             <i class="bi bi-upload"></i>
             <span>Upload</span>
         </a>
+        {% endif %}
     </div>
 
     <!-- Quick Stats -->
     <div class="quick-stats">
         {% if not user.has_premium_access %}
-        <div class="stat-box" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border: 2px solid #f39c12;">
+        <div class="stat-box" style="background: linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%); border: 2px solid #e91e63;">
             <div class="stat-icon"><i class="bi bi-star-fill text-white"></i></div>
             <div class="stat-value text-white">Free</div>
             <div class="stat-label text-white">Current Plan</div>
@@ -355,7 +289,7 @@
             </a>
         </div>
         {% else %}
-        <div class="stat-box" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); border: 2px solid #27ae60;">
+        <div class="stat-box" style="background: linear-gradient(135deg, #c8e6c9 0%, #81c784 100%); border: 2px solid #28a745;">
             <div class="stat-icon"><i class="bi bi-check-circle-fill text-white"></i></div>
             <div class="stat-value text-white">Premium</div>
             <div class="stat-label text-white">Active</div>
@@ -456,7 +390,7 @@
         <h3><i class="bi bi-heart-fill text-danger"></i> Available Escorts</h3>
         <div class="row g-3">
             <div class="col-md-4">
-                <div class="card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <div class="card text-center" style="background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%); border: none;">
                     <div class="card-body">
                         <i class="bi bi-people display-4 mb-3"></i>
                         <h3>{{ nearby_users_count|add:"47" }}</h3>
@@ -466,7 +400,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <div class="card text-center" style="background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%); border: none;">
                     <div class="card-body">
                         <i class="bi bi-chat-heart display-4 mb-3"></i>
                         <h3>New</h3>
@@ -476,7 +410,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <div class="card text-center" style="background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%); border: none;">
                     <div class="card-body">
                         <i class="bi bi-eye display-4 mb-3"></i>
                         <h3>{{ profile_views_count|add:"12" }}</h3>

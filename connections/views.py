@@ -10,6 +10,7 @@ from core.decorators import age_verified_required, rate_limit, ajax_required
 from .models import UserProfile, ProfilePhoto, Connection, Message, Visit, UserReport
 from .forms import UserProfileForm, ProfilePhotoForm, MessageForm, UserSearchForm, UserReportForm
 from accounts.models import User
+from content.models import Content
 
 
 @login_required
@@ -23,19 +24,18 @@ def browse_users(request):
     
     form = UserSearchForm(request.GET)
     
-    # Only show VERIFIED escorts with hookup profiles (mandatory verification)
+    # By default show all verified escorts (User.is_verified OR profile is/id/phone verified)
+    # Photo optional so verified escorts show even before uploading a photo
     users = User.objects.exclude(id=request.user.id).filter(
         user_type='escort',
         hookup_profile__isnull=False,
         hookup_profile__hide_from_search=False,
-    ).select_related('hookup_profile')
-    
-    # Enforce mandatory verification for escorts: must have phone verification AND at least one photo
-    users = users.filter(
-        hookup_profile__phone_verified=True
     ).filter(
-        hookup_profile__profile_photos__isnull=False
-    ).distinct()
+        Q(is_verified=True) |
+        Q(hookup_profile__is_verified=True) |
+        Q(hookup_profile__id_verified=True) |
+        Q(hookup_profile__phone_verified=True)
+    ).select_related('hookup_profile').distinct()
     
     # Filter by search criteria
     if form.is_valid():
@@ -87,6 +87,7 @@ def browse_users(request):
         
         if form.cleaned_data.get('verified_only'):
             users = users.filter(
+                Q(is_verified=True) |
                 Q(hookup_profile__is_verified=True) |
                 Q(hookup_profile__id_verified=True) |
                 Q(hookup_profile__phone_verified=True)
@@ -151,6 +152,11 @@ def user_profile(request, user_id):
     # Get all profile photos
     profile_photos = ProfilePhoto.objects.filter(user=profile_user).order_by('is_primary', 'order', 'created_at')
 
+    # Content uploaded by this user (approved only, for escorts)
+    user_content = []
+    if profile_user.is_escort:
+        user_content = Content.objects.filter(uploader=profile_user, status='approved').order_by('-created_at')[:12]
+
     # Handle user report submission
     report_form = None
     if request.method == 'POST' and 'reason' in request.POST:
@@ -173,6 +179,7 @@ def user_profile(request, user_id):
         'has_reverse_connection': has_reverse_connection,
         'visit_count': visit_count,
         'profile_photos': profile_photos,
+        'user_content': user_content,
         'report_form': report_form,
     }
     return render(request, 'connections/user_profile.html', context)
@@ -324,12 +331,28 @@ def messages_list(request):
 @require_http_methods(["GET", "POST"])
 @rate_limit(max_requests=30, period=60, key_prefix='send_message')
 def chat(request, user_id):
-    """Chat with a specific user."""
+    """Chat with a specific user. Only allowed once connection is accepted (matched)."""
     other_user = get_object_or_404(User, id=user_id)
     
-    # Clients must be verified to message escorts
-    if request.user.is_client and not request.user.is_client_verified():
-        messages.warning(request, 'Please verify your account to message escorts. Phone verification is required.')
+    # Require a matched connection before messaging (both must have accepted)
+    is_matched = (
+        Connection.objects.filter(
+            from_user=request.user, to_user=other_user, status='matched'
+        ).exists()
+        or Connection.objects.filter(
+            from_user=other_user, to_user=request.user, status='matched'
+        ).exists()
+    )
+    if not is_matched:
+        messages.warning(
+            request,
+            'You can message after you connect and they accept. Send a connection request from their profile, then wait for them to accept.'
+        )
+        return redirect('connections:user_profile', user_id=user_id)
+    
+    # Clients must be verified to message escorts (User.is_verified e.g. after M-Pesa, or hookup_profile.phone_verified)
+    if request.user.is_client and not request.user.is_verified and not request.user.is_client_verified():
+        messages.warning(request, 'Please verify your account to message escorts. Subscribe or complete phone verification first.')
         return redirect('accounts:profile')
     
     if request.method == 'POST':

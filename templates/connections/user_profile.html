@@ -1,189 +1,602 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+{% block title %}{{ profile_user.username }} — Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Profile page – hero, flow, and sections */
+/* Let gradient show: override base container background inside hero */
+.profile-hero,
+.profile-hero .container,
+.profile-hero .profile-main,
+.profile-hero .profile-info { background: transparent !important; }
+
+.profile-hero {
+    background: linear-gradient(135deg, #e91e63 0%, #c41e3a 50%, #ad1a32 100%) !important;
+    color: #fff;
+    padding: 2rem 0;
+    margin-bottom: 0;
+}
+.profile-hero .container { max-width: 1100px; }
+.profile-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    min-height: 320px;
+}
+@media (min-width: 768px) {
+    .profile-main { grid-template-columns: 340px 1fr; gap: 2rem; align-items: center; min-height: 420px; }
+}
+@media (min-width: 992px) {
+    .profile-main { grid-template-columns: 380px 1fr; gap: 2.5rem; min-height: 480px; }
+}
+/* Main hero image – fits cleanly in rounded card, no overflow */
+.profile-photo-wrap {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+    background: #f1f5f9;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.profile-photo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+.profile-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #fce4ec 0%, #f8bbd9 100%);
+    color: #c41e3a;
+}
+.profile-photo-placeholder i { font-size: 6rem; opacity: 0.5; }
+
+/* Compact “organizer” style: circular avatar + name row */
+.profile-info-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+.profile-avatar-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.profile-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+.profile-avatar-circle .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.5rem;
+}
+.profile-info-header .profile-info-titles { flex: 1; min-width: 0; }
+
+/* Right column: always on gradient, high contrast */
+.profile-info {
+    padding: 0.5rem 0;
+    color: #fff;
+}
+.profile-info h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #fff !important;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.profile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    color: rgba(255,255,255,0.98) !important;
+    font-size: 1rem;
+    font-weight: 500;
+}
+.profile-meta-inline { margin-bottom: 0; margin-top: 0.15rem; font-size: 0.95rem; }
+.profile-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.22);
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.35);
+}
+.profile-badge.online { background: rgba(76, 175, 80, 0.95); border-color: rgba(255,255,255,0.5); }
+.profile-badge.verified { background: rgba(255, 235, 59, 0.35); border-color: rgba(255, 235, 59, 0.7); color: #fff !important; }
+.profile-views {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.9) !important;
+    margin-bottom: 1.25rem;
+}
+
+/* Prominent CTAs */
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.profile-actions .profile-cta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+@media (min-width: 480px) {
+    .profile-actions .profile-cta-row { flex-direction: row; flex-wrap: wrap; }
+}
+.profile-actions .btn {
+    padding: 0.85rem 1.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.profile-actions .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.profile-actions .btn-primary {
+    background: #fff !important;
+    color: #c41e3a !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.profile-actions .btn-primary:hover {
+    background: #f8fafc !important;
+    color: #a01830 !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.profile-actions .btn-outline-light {
+    border: 2px solid rgba(255,255,255,0.9);
+    color: #fff !important;
+    background: rgba(255,255,255,0.1);
+}
+.profile-actions .btn-outline-light:hover {
+    background: rgba(255,255,255,0.25);
+    color: #fff !important;
+    border-color: #fff;
+}
+.profile-actions .profile-status-msg {
+    color: rgba(255,255,255,0.95) !important;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+.profile-actions .btn-block-danger {
+    margin-top: 0.5rem;
+    color: rgba(255,255,255,0.85) !important;
+    font-size: 0.9rem;
+}
+.profile-actions .btn-block-danger:hover { color: #fff !important; }
+.profile-actions form { margin-top: 0.25rem; }
+.profile-actions form .btn-link { padding: 0; }
+
+.profile-body { padding-top: 2rem; padding-bottom: 2.5rem; }
+.profile-body .container { background: #f8fafc !important; }
+.profile-section {
+    background: #fff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.profile-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text, #1e293b);
+    padding: 1rem 1.25rem;
+    margin: 0;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.profile-section-title i { color: var(--primary, #c41e3a); }
+.profile-section-body { padding: 1.35rem 1.25rem; }
+.detail-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.95rem;
+}
+.detail-row:last-child { margin-bottom: 0; }
+.detail-label { font-weight: 600; color: var(--text-muted, #64748b); min-width: 95px; flex-shrink: 0; }
+.detail-value { color: var(--text, #1e293b); }
+.bio-text { color: var(--text, #1e293b); line-height: 1.65; white-space: pre-line; margin: 0 0 1rem 0; }
+.profile-section-body .text-muted { color: var(--text-muted, #64748b) !important; }
+
+.profile-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.6rem;
+}
+.profile-gallery a {
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    display: block;
+    background: var(--border);
+    position: relative;
+}
+.profile-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    transition: transform 0.25s ease;
+}
+.profile-gallery a:hover img { transform: scale(1.06); }
+
+.profile-content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+.profile-content-card {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.profile-content-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.profile-content-card a { text-decoration: none; color: inherit; display: block; }
+.profile-content-card .thumb {
+    aspect-ratio: 16 / 9;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+}
+.profile-content-card .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+.profile-content-card .thumb .type-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.profile-content-card .title {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+}
+.profile-content-card .meta { padding: 0 0.6rem 0.5rem; font-size: 0.75rem; color: var(--text-muted); }
+
+.report-toggle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: none;
+}
+.report-toggle:hover { color: var(--primary); }
+.report-form-wrap {
+    padding: 1rem;
+    background: var(--bg-card-alt);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-top: 0.75rem;
+}
+.btn-block-danger { color: #b91c1c; font-size: 0.9rem; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            <!-- Large Profile Photo Gallery -->
-            <div class="card mb-4">
-                <div class="card-body text-center p-0">
-                    {% if profile_photos %}
-                    {% if profile_photos.count > 1 %}
-                    <div id="profilePhotoCarousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner">
-                            {% for photo in profile_photos %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <img src="{{ photo.photo.url }}" class="d-block w-100" style="height: 400px; object-fit: cover;" alt="{{ profile_user.username }}">
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                        <div class="carousel-indicators">
-                            {% for photo in profile_photos %}
-                            <button type="button" data-bs-target="#profilePhotoCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></button>
-                            {% endfor %}
-                        </div>
+<!-- Hero strip -->
+<div class="profile-hero">
+    <div class="container">
+        <div class="profile-main">
+            <!-- Main profile photo -->
+            <div class="profile-photo-wrap">
+                {% if profile_photos %}
+                    {% with first_photo=profile_photos.first %}
+                    <img id="profileMainImg" src="{{ first_photo.photo.url }}" alt="{{ profile_user.username }}">
+                    {% endwith %}
+                {% else %}
+                    <div class="profile-photo-placeholder">
+                        <i class="bi bi-person-circle"></i>
                     </div>
-                    {% else %}
-                    <img src="{{ profile_photos.first.photo.url }}" class="img-fluid w-100" style="height: 400px; object-fit: cover;" alt="{{ profile_user.username }}">
-                    {% endif %}
-                    {% else %}
-                    <div style="height: 400px; display: flex; align-items: center; justify-content: center; background: #2a2a2a;">
-                        <i class="bi bi-person-circle" style="font-size: 200px; color: #666;"></i>
-                    </div>
-                    {% endif %}
-                    <div class="p-3">
-                        <h3>{{ profile_user.username }}</h3>
-                        {% if profile_user.hookup_profile %}
-                        <p class="mb-2">
-                            {% if profile_user.hookup_profile.age %}{{ profile_user.hookup_profile.age }}{% endif %}
-                            {% if profile_user.hookup_profile.gender %} • {{ profile_user.hookup_profile.get_gender_display }}{% endif %}
-                        </p>
-                        {% if profile_user.hookup_profile.is_active_now %}
-                        <span class="badge bg-success mb-2">Online Now</span>
-                        {% else %}
-                        <span class="badge bg-secondary mb-2">Offline</span>
-                        {% endif %}
-                        {% endif %}
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="bi bi-eye"></i> {{ visit_count }} profile view{{ visit_count|pluralize }}
-                            </small>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
 
-            <!-- Action Buttons -->
-            <div class="card">
-                <div class="card-body">
-                    {% if is_matched %}
-                    <p class="text-success"><i class="bi bi-heart-fill"></i> You're matched!</p>
-                    <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-primary w-100 mb-2">Send Message</a>
-                    {% elif is_pending %}
-                    <p class="text-warning"><i class="bi bi-clock"></i> Connection pending</p>
-                    {% elif has_reverse_connection %}
-                    <p class="text-info">They connected with you!</p>
-                    <button onclick="connectUser({{ profile_user.id }})" class="btn btn-success w-100 mb-2">Match Back</button>
+            <!-- Key info + actions (organizer-style: avatar + name + details + CTAs) -->
+            <div class="profile-info">
+                <div class="profile-info-header">
+                    {% if profile_photos %}
+                    <div class="profile-avatar-circle">
+                        <img src="{{ profile_photos.first.photo.url }}" alt="" aria-hidden="true">
+                    </div>
                     {% else %}
-                    <button onclick="connectUser({{ profile_user.id }})" class="btn btn-primary w-100 mb-2">
-                        <i class="bi bi-heart"></i> Connect
-                    </button>
+                    <div class="profile-avatar-circle avatar-placeholder">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
                     {% endif %}
-                    <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-secondary w-100 mb-2">Message</a>
+                    <div class="profile-info-titles">
+                        <h1>{{ profile_user.username }}</h1>
+                        {% if profile_user.hookup_profile %}
+                        <div class="profile-meta profile-meta-inline">
+                            {% if profile_user.hookup_profile.age %}<span>{{ profile_user.hookup_profile.age }} yrs</span>{% endif %}
+                            {% if profile_user.hookup_profile.gender %}<span> · {{ profile_user.hookup_profile.get_gender_display }}</span>{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if profile_user.hookup_profile %}
+                <div class="profile-badges">
+                    {% if profile_user.hookup_profile.is_active_now %}
+                    <span class="profile-badge online"><i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Online now</span>
+                    {% else %}
+                    <span class="profile-badge"><i class="bi bi-circle" style="font-size: 0.5rem;"></i> Offline</span>
+                    {% endif %}
+                    {% if profile_user.hookup_profile.id_verified or profile_user.hookup_profile.phone_verified or profile_user.hookup_profile.is_verified %}
+                    <span class="profile-badge verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <p class="profile-views"><i class="bi bi-eye"></i> {{ visit_count }} profile view{{ visit_count|pluralize }}</p>
+
+                <!-- Connect / Message – prominent CTAs -->
+                <div class="profile-actions">
+                    {% if is_matched %}
+                    <p class="profile-status-msg mb-0"><i class="bi bi-heart-fill"></i> You're matched — message each other anytime.</p>
+                    <div class="profile-cta-row">
+                        <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-primary">
+                            <i class="bi bi-chat-dots-fill"></i> Message
+                        </a>
+                    </div>
+                    {% elif is_pending %}
+                    <p class="profile-status-msg mb-0"><i class="bi bi-clock"></i> Connection pending. They'll see your request soon.</p>
+                    <div class="profile-cta-row">
+                        <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-outline-light">
+                            <i class="bi bi-chat-dots"></i> Open Chat
+                        </a>
+                    </div>
+                    {% elif has_reverse_connection %}
+                    <p class="profile-status-msg mb-0">They want to connect with you. Match to start chatting.</p>
+                    <div class="profile-cta-row">
+                        <button type="button" onclick="connectUser({{ profile_user.id }})" class="btn btn-primary">
+                            <i class="bi bi-heart-fill"></i> Match back
+                        </button>
+                        <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-outline-light">
+                            <i class="bi bi-chat-dots"></i> Message
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="profile-cta-row">
+                        <button type="button" onclick="connectUser({{ profile_user.id }})" class="btn btn-primary">
+                            <i class="bi bi-heart"></i> Connect
+                        </button>
+                        <a href="{% url 'connections:chat' profile_user.id %}" class="btn btn-outline-light">
+                            <i class="bi bi-chat-dots"></i> Message
+                        </a>
+                    </div>
+                    {% endif %}
                     <form method="post" action="{% url 'connections:block' profile_user.id %}" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to block this user?')">Block</button>
+                        <button type="submit" class="btn btn-link btn-block-danger" onclick="return confirm('Block this user? You won\'t see each other.');">
+                            <i class="bi bi-slash-circle"></i> Block
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-md-8">
-            <!-- Profile Info -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h4>About</h4>
+<div class="container profile-body">
+    <!-- Key details -->
+    <div class="profile-section">
+        <h2 class="profile-section-title"><i class="bi bi-person-lines-fill"></i> About</h2>
+        <div class="profile-section-body">
+            {% if profile_user.hookup_profile %}
+                {% if profile_user.hookup_profile.bio %}
+                <p class="bio-text">{{ profile_user.hookup_profile.bio }}</p>
+                {% endif %}
+                <div class="detail-row"><span class="detail-label">Seeking</span><span class="detail-value">{{ profile_user.hookup_profile.get_seeking_display }}</span></div>
+                {% if profile_user.hookup_profile.city or profile_user.hookup_profile.area %}
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">
+                        {% if profile_user.hookup_profile.city %}{{ profile_user.hookup_profile.city }}{% endif %}
+                        {% if profile_user.hookup_profile.area %} · {{ profile_user.hookup_profile.get_area_display }}{% endif %}
+                        {% if profile_user.hookup_profile.location %} — {{ profile_user.hookup_profile.location }}{% endif %}
+                    </span>
                 </div>
-                <div class="card-body">
-                    {% if profile_user.hookup_profile %}
-                    <p><strong>Seeking:</strong> {{ profile_user.hookup_profile.get_seeking_display }}</p>
-                    {% if profile_user.hookup_profile.location %}
-                    <p><strong>Location:</strong> {{ profile_user.hookup_profile.location }}</p>
-                    {% endif %}
-                    {% if profile_user.hookup_profile.bio %}
-                    <p><strong>Bio:</strong><br>{{ profile_user.hookup_profile.bio|linebreaks }}</p>
-                    {% endif %}
-                    {% if profile_user.hookup_profile.interests %}
-                    <p><strong>Interests:</strong> {{ profile_user.hookup_profile.interests }}</p>
-                    {% endif %}
-                    {% else %}
-                    <p class="text-muted">No profile information available.</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Report User -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Report User</h5>
-                </div>
-                <div class="card-body">
-                    <p class="small text-muted">
-                        If this user is engaging in harassment, spam, fake identity, or other unsafe behavior, you can submit a report for review.
-                    </p>
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ report_form.reason }}
-                        <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Submit Report</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Photo Gallery -->
-            {% if profile_photos.count > 1 %}
-            <div class="card">
-                <div class="card-header">
-                    <h4>Photo Gallery ({{ profile_photos.count }} photos)</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        {% for photo in profile_photos %}
-                        <div class="col-md-3 col-sm-4 col-6">
-                            <a href="#" onclick="showPhotoInCarousel({{ forloop.counter0 }}); return false;">
-                                <img src="{{ photo.photo.url }}" class="img-fluid rounded" alt="Photo {{ forloop.counter }}" style="height: 150px; width: 100%; object-fit: cover; cursor: pointer;">
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+                {% endif %}
+                {% if profile_user.hookup_profile.interests %}
+                <div class="detail-row"><span class="detail-label">Interests</span><span class="detail-value">{{ profile_user.hookup_profile.interests }}</span></div>
+                {% endif %}
+                {% if not profile_user.hookup_profile.bio and not profile_user.hookup_profile.interests and not profile_user.hookup_profile.city and not profile_user.hookup_profile.area %}
+                <p class="text-muted mb-0">No details added yet.</p>
+                {% endif %}
+            {% else %}
+            <p class="text-muted mb-0">No profile information available.</p>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Other photos -->
+    {% if profile_photos %}
+    <div class="profile-section">
+        <h2 class="profile-section-title"><i class="bi bi-images"></i> Photos ({{ profile_photos.count }})</h2>
+        <div class="profile-section-body">
+            <div class="profile-gallery" id="profileGallery">
+                {% for photo in profile_photos %}
+                <a href="{{ photo.photo.url }}" data-index="{{ forloop.counter0 }}" onclick="setMainPhoto('{{ photo.photo.url }}'); return false;" title="View photo">
+                    <img src="{{ photo.photo.url }}" alt="Photo {{ forloop.counter }}">
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Content from this user -->
+    {% if user_content %}
+    <div class="profile-section">
+        <h2 class="profile-section-title"><i class="bi bi-camera-reels"></i> Content by {{ profile_user.username }}</h2>
+        <div class="profile-section-body">
+            <div class="profile-content-grid">
+                {% for content in user_content %}
+                <div class="profile-content-card">
+                    <a href="{% url 'content:detail' content.slug %}">
+                        <div class="thumb">
+                            <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}">
+                            <span class="type-badge">{{ content.content_type }}</span>
+                        </div>
+                        <div class="title">{{ content.title|truncatewords:6 }}</div>
+                        <div class="meta"><i class="bi bi-eye"></i> {{ content.views }} · <i class="bi bi-heart"></i> {{ content.likes }}</div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-3">
+                <a href="{% url 'content:list' %}" class="btn btn-outline-primary btn-sm">Browse more content</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Report (collapsed) -->
+    <div class="profile-section">
+        <a class="profile-section-title report-toggle w-100" data-bs-toggle="collapse" href="#reportCollapse" role="button" aria-expanded="false">
+            <i class="bi bi-flag"></i> Report this profile
+        </a>
+        <div class="collapse" id="reportCollapse">
+            <div class="profile-section-body">
+                <p class="small text-muted mb-2">If this profile is harassing, spam, or fake, submit a report for review.</p>
+                <form method="post" class="report-form-wrap">
+                    {% csrf_token %}
+                    {{ report_form.reason }}
+                    <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Submit report</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Connection result modal -->
+<div class="modal fade" id="connectionResultModal" tabindex="-1" aria-labelledby="connectionResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="connectionResultModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="mb-0" id="connectionResultModalBody"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="connectionResultModalOk">OK</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+function setMainPhoto(url) {
+    var img = document.getElementById('profileMainImg');
+    if (img) { img.src = url; }
+}
 function connectUser(userId) {
-    fetch(`/connections/connect/${userId}/`, {
+    fetch('/connections/connect/' + userId + '/', {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
             'Content-Type': 'application/json',
         },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'matched') {
-            alert('🎉 It\'s a match!');
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(result) {
+        var data = result.data;
+        var modal = new bootstrap.Modal(document.getElementById('connectionResultModal'));
+        var titleEl = document.getElementById('connectionResultModalLabel');
+        var bodyEl = document.getElementById('connectionResultModalBody');
+        if (!result.ok) {
+            titleEl.textContent = 'Notice';
+            bodyEl.textContent = data.error || 'Something went wrong.';
+        } else if (data.status === 'matched') {
+            titleEl.textContent = "It's a match!";
+            bodyEl.textContent = 'You can now message each other.';
+        } else if (data.status === 'pending') {
+            titleEl.textContent = 'Connection sent';
+            bodyEl.textContent = "They'll see your request. When they match back, you can chat.";
         } else {
-            alert('Connection sent!');
+            titleEl.textContent = 'Notice';
+            bodyEl.textContent = data.message || data.error || 'Done.';
         }
-        location.reload();
+        document.getElementById('connectionResultModalOk').onclick = function() { modal.hide(); location.reload(); };
+        document.getElementById('connectionResultModal').addEventListener('hidden.bs.modal', function() { location.reload(); }, { once: true });
+        modal.show();
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred');
+    .catch(function(err) {
+        console.error(err);
+        var modal = new bootstrap.Modal(document.getElementById('connectionResultModal'));
+        document.getElementById('connectionResultModalLabel').textContent = 'Error';
+        document.getElementById('connectionResultModalBody').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('connectionResultModalOk').onclick = function() { modal.hide(); };
+        document.getElementById('connectionResultModal').addEventListener('hidden.bs.modal', function() { location.reload(); }, { once: true });
+        modal.show();
     });
-}
-
-function showPhotoInCarousel(index) {
-    const carousel = document.getElementById('profilePhotoCarousel');
-    if (carousel) {
-        const carouselInstance = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
-        carouselInstance.to(index);
-        // Scroll to carousel
-        carousel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
 }
 </script>
 {% endblock %}

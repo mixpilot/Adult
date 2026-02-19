@@ -30,7 +30,6 @@ def register_view(request):
 
 
 @require_http_methods(["GET", "POST"])
-@rate_limit(max_requests=10, period=300, key_prefix='login')
 def login_view(request):
     """User login view."""
     if request.method == 'POST':
@@ -53,10 +52,14 @@ def login_view(request):
                     request.session.set_expiry(0)
                     request.session.setdefault('remember_me', False)
                 messages.success(request, f'Welcome back, {user.username}!')
+                next_url = request.GET.get('next') or request.POST.get('next')
+                if next_url and next_url.startswith('/') and '//' not in next_url:
+                    return redirect(next_url)
                 return redirect('core:home')
     else:
         form = UserLoginForm()
-    return render(request, 'accounts/login.html', {'form': form})
+    next_param = request.GET.get('next', '')
+    return render(request, 'accounts/login.html', {'form': form, 'next': next_param})
 
 
 @login_required

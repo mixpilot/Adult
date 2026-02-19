@@ -12,12 +12,8 @@ from .forms import CommentForm, ContentReportForm
 
 @login_required
 def content_list(request):
-    """List all content with filtering and pagination."""
-    # Only show approved content to non-staff users
-    if request.user.is_staff:
-        contents = Content.objects.all()
-    else:
-        contents = Content.objects.filter(status='approved')
+    """List all uploaded content with filtering and pagination."""
+    contents = Content.objects.all()
     
     # Filter by category
     category_slug = request.GET.get('category')
@@ -199,11 +195,14 @@ def category_detail(request, slug):
 @require_http_methods(["GET", "POST"])
 @rate_limit(max_requests=10, period=3600, key_prefix='upload_content')
 def upload_content(request):
-    """Upload new content."""
+    """Upload new content. Only escorts can upload."""
+    if not request.user.is_escort:
+        messages.warning(request, 'Only escorts can upload content.')
+        return redirect('content:list')
     from django.utils.text import slugify
     from .forms import ContentForm
     from .models import ContentImage
-    
+
     if request.method == 'POST':
         form = ContentForm(request.POST, request.FILES)
         if form.is_valid():

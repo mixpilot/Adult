@@ -49,11 +49,11 @@
                         <!-- Account Type Selection -->
                         <div class="mb-4">
                             <label class="form-label fw-bold"><strong>{{ form.user_type.label }}</strong></label>
-                            <div class="card bg-dark border-0 mb-2">
+                            <div class="card border mb-2">
                                 <div class="card-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <div class="form-check p-3 border rounded user-type-card" data-type="client" style="cursor: pointer; background: rgba(102, 126, 234, 0.1); border-color: #667eea !important;">
+                                            <div class="form-check p-3 border rounded user-type-card" data-type="client" style="cursor: pointer; background: rgba(196, 30, 58, 0.08); border-color: #f0dce2 !important;">
                                                 <input class="form-check-input" type="radio" name="user_type" id="id_user_type_0" value="client" required>
                                                 <label class="form-check-label w-100" for="id_user_type_0" style="cursor: pointer;">
                                                     <div class="d-flex align-items-center">
@@ -67,7 +67,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="form-check p-3 border rounded user-type-card" data-type="escort" style="cursor: pointer; background: rgba(245, 87, 108, 0.1); border-color: #f5576c !important;">
+                                            <div class="form-check p-3 border rounded user-type-card" data-type="escort" style="cursor: pointer; background: rgba(233, 30, 99, 0.08); border-color: #f0dce2 !important;">
                                                 <input class="form-check-input" type="radio" name="user_type" id="id_user_type_1" value="escort" required>
                                                 <label class="form-check-label w-100" for="id_user_type_1" style="cursor: pointer;">
                                                     <div class="d-flex align-items-center">
@@ -131,19 +131,19 @@ function updateSelection() {
         const radio = card.querySelector('input[type="radio"]');
         if (radio.checked) {
             if (radio.value === 'client') {
-                card.style.background = 'rgba(102, 126, 234, 0.3)';
-                card.style.borderColor = '#667eea';
+                card.style.background = 'rgba(196, 30, 58, 0.15)';
+                card.style.borderColor = '#c41e3a';
                 card.style.borderWidth = '2px';
             } else {
-                card.style.background = 'rgba(245, 87, 108, 0.3)';
-                card.style.borderColor = '#f5576c';
+                card.style.background = 'rgba(233, 30, 99, 0.15)';
+                card.style.borderColor = '#e91e63';
                 card.style.borderWidth = '2px';
             }
         } else {
             if (radio.value === 'client') {
-                card.style.background = 'rgba(102, 126, 234, 0.1)';
+                card.style.background = 'rgba(196, 30, 58, 0.08)';
             } else {
-                card.style.background = 'rgba(245, 87, 108, 0.1)';
+                card.style.background = 'rgba(233, 30, 99, 0.08)';
             }
             card.style.borderWidth = '1px';
         }

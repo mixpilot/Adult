@@ -114,6 +114,24 @@
     </div>
 </div>
 
+<!-- Connection result modal (replaces browser alert) -->
+<div class="modal fade" id="connectionResultModal" tabindex="-1" aria-labelledby="connectionResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="connectionResultModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="mb-0" id="connectionResultModalBody"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="connectionResultModalOk">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function connectUser(userId) {
     fetch(`/connections/connect/${userId}/`, {
@@ -123,12 +141,37 @@ function connectUser(userId) {
             'Content-Type': 'application/json',
         },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'matched') {
-            alert('🎉 It\'s a match!');
+    .then(function(response) { return response.json().then(function(data) { return { ok: response.ok, data: data }; }); })
+    .then(function(result) {
+        var data = result.data;
+        var modal = new bootstrap.Modal(document.getElementById('connectionResultModal'));
+        var titleEl = document.getElementById('connectionResultModalLabel');
+        var bodyEl = document.getElementById('connectionResultModalBody');
+        if (!result.ok) {
+            titleEl.textContent = 'Notice';
+            bodyEl.textContent = data.error || 'Something went wrong.';
+        } else if (data.status === 'matched') {
+            titleEl.textContent = '🎉 It\'s a match!';
+            bodyEl.textContent = 'You can now message each other.';
+        } else if (data.status === 'pending') {
+            titleEl.textContent = 'Connection sent!';
+            bodyEl.textContent = 'They\'ll see your request. When they match back, you can chat.';
+        } else {
+            titleEl.textContent = 'Notice';
+            bodyEl.textContent = data.message || data.error || 'Done.';
         }
-        location.reload();
+        document.getElementById('connectionResultModalOk').onclick = function() { modal.hide(); location.reload(); };
+        document.getElementById('connectionResultModal').addEventListener('hidden.bs.modal', function() { location.reload(); }, { once: true });
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        var modal = new bootstrap.Modal(document.getElementById('connectionResultModal'));
+        document.getElementById('connectionResultModalLabel').textContent = 'Error';
+        document.getElementById('connectionResultModalBody').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('connectionResultModalOk').onclick = function() { modal.hide(); };
+        document.getElementById('connectionResultModal').addEventListener('hidden.bs.modal', function() { location.reload(); }, { once: true });
+        modal.show();
     });
 }
 </script>

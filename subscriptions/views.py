@@ -11,9 +11,13 @@ from django.db.models import Sum
 from django.urls import reverse
 from datetime import timedelta, datetime
 import json
+import logging
 import random
 import string
 
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 from .models import (
     SubscriptionPlan, Subscription, Payment, PromoCode,
     Token, TokenTransaction, CreatorEarning, PayPerViewPurchase, Tip
@@ -22,21 +26,44 @@ from .forms import SubscriptionForm, PromoCodeForm, TokenPurchaseForm, TipForm
 from content.models import Content
 
 
+def ensure_default_plans():
+    """Create the three default plans (250/mo, 500/mo, 100 once) if not already present. Visible to both."""
+    # Already have the default set (Standard, Premium, One Time for both)
+    if SubscriptionPlan.objects.filter(tier__in=('basic', 'premium', 'once'), user_type='both', is_active=True).count() >= 3:
+        return
+    plans_data = [
+        {'tier': 'basic', 'user_type': 'both', 'name': 'Standard', 'price_monthly': Decimal('250.00'),
+         'description': 'Access verified escorts, message and connect. Perfect to get started.',
+         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': False, 'advanced_search': True},
+        {'tier': 'premium', 'user_type': 'both', 'name': 'Premium', 'price_monthly': Decimal('500.00'),
+         'price_quarterly': Decimal('1350.00'), 'price_yearly': Decimal('4800.00'),
+         'description': 'Full access, priority support, and ad-free experience. Best value.',
+         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': True, 'advanced_search': True, 'priority_support': True},
+        {'tier': 'once', 'user_type': 'both', 'name': 'One Time Access', 'price_monthly': Decimal('100.00'),
+         'description': 'One-time payment for 30 days access. No renewal.',
+         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': False, 'advanced_search': True},
+    ]
+    for d in plans_data:
+        SubscriptionPlan.objects.get_or_create(
+            tier=d['tier'], user_type=d['user_type'],
+            defaults={k: v for k, v in d.items() if k not in ('tier', 'user_type')},
+        )
+
+
 @login_required
 def subscription_plans(request):
     """Display subscription plans based on user type."""
-    # Get plans for user's type (client or escort)
+    ensure_default_plans()
     user_type = request.user.user_type
-    
-    # Check if this is a new user (just registered)
     is_new_user = request.GET.get('new_user') == '1'
     
-    # Get plans for user type or 'both'
-    plans = SubscriptionPlan.objects.filter(
-        is_active=True
-    ).filter(
-        models.Q(user_type=user_type) | models.Q(user_type='both')
-    ).order_by('price_monthly')
+    plans = list(
+        SubscriptionPlan.objects.filter(is_active=True)
+        .filter(models.Q(user_type=user_type) | models.Q(user_type='both'))
+        .order_by('price_monthly')
+    )
+    if not plans:
+        plans = list(SubscriptionPlan.objects.filter(is_active=True).order_by('price_monthly'))
     
     # Also get plans for the other type (for switching)
     other_type = 'escort' if user_type == 'client' else 'client'
@@ -96,7 +123,10 @@ def review_subscription(request):
             return redirect('accounts:profile')
     
     # Handle form submission (billing period and promo code selection)
-    billing_period = request.GET.get('billing_period', 'monthly')
+    if getattr(plan, 'is_one_time_plan', plan.tier == 'once'):
+        billing_period = 'once'
+    else:
+        billing_period = request.GET.get('billing_period', 'monthly')
     promo_code_text = request.GET.get('promo_code', '').strip()
     
     # Calculate pricing
@@ -140,6 +170,7 @@ def review_subscription(request):
         'quarterly_savings': quarterly_savings,
         'yearly_savings': yearly_savings,
         'user_type': user_type,
+        'is_one_time_plan': getattr(plan, 'is_one_time_plan', plan.tier == 'once'),
     }
     return render(request, 'subscriptions/review.html', context)
 
@@ -147,86 +178,129 @@ def review_subscription(request):
 @login_required
 def subscribe(request):
     """Handle subscription payment form submission."""
+    logger.warning('[subscribe] ENTRY method=%s POST_keys=%s', request.method, list(request.POST.keys()))
+
     # Get plan, billing period, and promo code from POST or query params
     plan_id = request.POST.get('plan') or request.GET.get('plan')
     billing_period = request.POST.get('billing_period', 'monthly')
     promo_code_text = request.POST.get('promo_code', '').strip()
-    
+    logger.warning('[subscribe] plan_id=%s billing_period=%s promo_code_text=%r', plan_id, billing_period, promo_code_text)
+
     if not plan_id:
+        logger.warning('[subscribe] REDIRECT → plans (no plan_id)')
         messages.error(request, "Please select a plan first.")
         return redirect('subscriptions:plans')
-    
+
     try:
         plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
     except SubscriptionPlan.DoesNotExist:
+        logger.warning('[subscribe] REDIRECT → plans (plan not found id=%s)', plan_id)
         messages.error(request, "Selected plan not found.")
         return redirect('subscriptions:plans')
-    
-    if request.method == 'POST':
-        # Get payment details from form
-        payment_method = request.POST.get('payment_method')
-        phone_number = request.POST.get('phone_number', '').strip()
-        
-        if not payment_method or not phone_number:
-            messages.error(request, "Please provide payment method and phone number.")
-            return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
-        
-        # Validate promo code if provided
-        promo_code = None
-        discount_amount = 0
-        if promo_code_text:
-            try:
-                promo_code = PromoCode.objects.get(code__iexact=promo_code_text, is_active=True)
-                is_valid, message = promo_code.is_valid(user=request.user, plan=plan)
-                if not is_valid:
-                    messages.error(request, f"Invalid promo code: {message}")
-                    return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
-            except PromoCode.DoesNotExist:
-                messages.error(request, "Invalid promo code")
+
+    if request.method != 'POST':
+        logger.warning('[subscribe] REDIRECT → review (method not POST)')
+        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
+
+    # POST: payment details
+    payment_method = request.POST.get('payment_method')
+    phone_number = request.POST.get('phone_number', '').strip()
+    logger.warning('[subscribe] payment_method=%r phone_number=%r', payment_method, phone_number or '(empty)')
+
+    if not payment_method or not phone_number:
+        logger.warning('[subscribe] REDIRECT → review (missing payment_method or phone_number)')
+        messages.error(request, "Please provide payment method and phone number.")
+        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
+
+    # Validate promo code if provided
+    promo_code = None
+    discount_amount = 0
+    if promo_code_text:
+        try:
+            promo_code = PromoCode.objects.get(code__iexact=promo_code_text, is_active=True)
+            is_valid, message = promo_code.is_valid(user=request.user, plan=plan)
+            if not is_valid:
+                logger.warning('[subscribe] REDIRECT → review (invalid promo: %s)', message)
+                messages.error(request, f"Invalid promo code: {message}")
                 return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
-        
-        # Check ID verification requirement for Premium/VIP plans
-        if plan.tier in ['premium', 'vip']:
-            if not request.user.is_id_verified():
-                messages.warning(
-                    request, 
-                    f'ID verification is required for {plan.name} plans. Please verify your ID before subscribing.'
-                )
-                return redirect('accounts:profile')
-        
-        # Calculate price
-        price = plan.get_price(billing_period)
-        if promo_code:
-            discount_amount = promo_code.calculate_discount(price)
-            final_price = price - discount_amount
-        else:
-            final_price = price
-            
-            # Generate transaction reference
-            transaction_ref = generate_transaction_reference()
-            
-            # Create pending payment
-            payment = Payment.objects.create(
-                user=request.user,
-                plan=plan,
-                amount=final_price,
-                payment_method=payment_method,
-                phone_number=phone_number,
-                transaction_reference=transaction_ref,
-                status='pending',
-                billing_period=billing_period,
+        except PromoCode.DoesNotExist:
+            logger.warning('[subscribe] REDIRECT → review (promo not found)')
+            messages.error(request, "Invalid promo code")
+            return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
+
+    # Check ID verification requirement for Premium/VIP plans
+    if plan.tier in ['premium', 'vip']:
+        if not request.user.is_id_verified():
+            logger.warning('[subscribe] REDIRECT → accounts:profile (ID verification required)')
+            messages.warning(
+                request,
+                f'ID verification is required for {plan.name} plans. Please verify your ID before subscribing.'
             )
-            
-            # Update user's phone number if provided
-            if phone_number:
-                request.user.phone_number = phone_number
-                request.user.save(update_fields=['phone_number'])
-            
-            # Redirect to payment instructions page
-            return redirect('subscriptions:payment_instructions', payment_id=payment.id)
+            return redirect('accounts:profile')
+
+    # Calculate price
+    price = plan.get_price(billing_period)
+    if promo_code:
+        discount_amount = promo_code.calculate_discount(price)
+        final_price = price - discount_amount
     else:
-        # GET request - redirect to review page
-        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}")
+        final_price = price
+    logger.warning('[subscribe] final_price=%s plan.tier=%s', final_price, plan.tier)
+
+    # Generate transaction reference and create pending payment
+    transaction_ref = generate_transaction_reference()
+    payment = Payment.objects.create(
+        user=request.user,
+        plan=plan,
+        amount=final_price,
+        payment_method=payment_method,
+        phone_number=phone_number,
+        transaction_reference=transaction_ref,
+        status='pending',
+        billing_period=billing_period,
+    )
+
+    if phone_number:
+        request.user.phone_number = phone_number
+        request.user.save(update_fields=['phone_number'])
+
+    # M-Pesa prompt (STK Push): trigger prompt and redirect to waiting page
+    if payment_method != 'mpesa':
+        logger.warning('[subscribe] REDIRECT → payment_instructions (payment_method=%s not mpesa)', payment_method)
+        return redirect('subscriptions:payment_instructions', payment_id=payment.id)
+
+    from payments.services import MpesaService
+    from payments.models import MpesaTransaction
+
+    logger.warning('[subscribe] Calling M-Pesa STK push payment_id=%s phone=%s amount=%s', payment.id, phone_number, final_price)
+    account_ref = f'sub_{payment.id}'
+    desc = f'{plan.name} {billing_period}'[:13]
+    service = MpesaService()
+    result = service.initiate_stk_push(
+        phone_number=phone_number,
+        amount=final_price,
+        account_reference=account_ref,
+        transaction_desc=desc,
+    )
+    logger.warning('[subscribe] STK result: success=%s error_message=%s', result.get('success'), result.get('error_message', ''))
+
+    if result['success']:
+        MpesaTransaction.objects.create(
+            account_reference=account_ref,
+            transaction_desc=desc,
+            phone_number=service.normalize_phone(phone_number),
+            amount=final_price,
+            checkout_request_id=result['checkout_request_id'],
+            merchant_request_id=result['merchant_request_id'],
+            status='pending',
+        )
+        logger.warning('[subscribe] REDIRECT → mpesa_waiting payment_id=%s', payment.id)
+        return redirect('subscriptions:mpesa_waiting', payment_id=payment.id)
+
+    # STK failed: send back to review to try again.
+    logger.warning('[subscribe] REDIRECT → review (STK failed: %s)', result.get('error_message', ''))
+    messages.error(request, result.get('error_message', 'M-Pesa prompt could not be sent. Check your number and try again.'))
+    return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
 
 
 @login_required
@@ -248,15 +322,31 @@ def subscription_success(request):
 
 @login_required
 def manage_subscription(request):
-    """Manage user's subscription."""
+    """Manage user's subscription and payment history."""
     subscription = None
     if hasattr(request.user, 'subscription'):
         subscription = request.user.subscription
-    
+
+    payment_history = Payment.objects.filter(user=request.user).select_related('plan').order_by('-created_at')[:50]
+
     context = {
         'subscription': subscription,
+        'payment_history': payment_history,
     }
     return render(request, 'subscriptions/manage.html', context)
+
+
+@login_required
+def mpesa_waiting(request, payment_id):
+    """Shown after M-Pesa STK push was sent – user completes payment on phone."""
+    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
+    if payment.payment_method != 'mpesa':
+        return redirect('subscriptions:payment_instructions', payment_id=payment_id)
+    if payment.status == 'completed':
+        messages.success(request, 'Payment completed. Your subscription is active.')
+        return redirect('subscriptions:manage')
+    context = {'payment': payment}
+    return render(request, 'subscriptions/mpesa_waiting.html', context)
 
 
 @login_required
@@ -341,11 +431,15 @@ def payment_instructions(request, payment_id):
     }
     
     method_info = payment_methods_info.get(payment.payment_method, payment_methods_info['mobile_money'])
-    
+    # M-Pesa is STK push only – never show paybill steps
+    use_stk_only = payment.payment_method == 'mpesa'
+    review_url = reverse('subscriptions:review_subscription') + f'?plan={payment.plan_id}&billing_period={payment.billing_period}'
     context = {
         'payment': payment,
         'method_info': method_info,
         'transaction_ref': payment.transaction_reference,
+        'use_stk_only': use_stk_only,
+        'review_url': review_url,
     }
     return render(request, 'subscriptions/payment_instructions.html', context)
 
