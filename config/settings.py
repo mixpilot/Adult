@@ -251,3 +251,25 @@ UNFOLD = {
         },
     },
 }
+
+# ============================================
+# HTTPS & SECURITY SETTINGS (Production)
+# ============================================
+# Only enable in production (when DEBUG=False)
+if not DEBUG:
+    # Force HTTPS redirects
+    SECURE_SSL_REDIRECT = True
+    
+    # Secure cookies (only sent over HTTPS)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Prevent clickjacking and XSS
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # HSTS (HTTP Strict Transport Security) - tells browsers to always use HTTPS
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

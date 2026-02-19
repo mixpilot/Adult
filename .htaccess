@@ -5,6 +5,10 @@
     RewriteEngine On
     RewriteBase /
     
+    # Force HTTPS redirect (redirect HTTP to HTTPS)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
     # Serve static files from staticfiles directory
     RewriteRule ^static/(.*)$ staticfiles/$1 [L]
     

@@ -27,9 +27,11 @@
                     </p>
                     <p class="text-muted small mb-0" id="poll-status">Checking…</p>
                     <div class="mt-4" id="action-buttons">
+                        {% comment %}
                         <a href="{% url 'subscriptions:manage' %}" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-circle"></i> Check subscription status
                         </a>
+                        {% endcomment %}
                         <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary btn-lg ms-2">
                             <i class="bi bi-arrow-left"></i> Back to plans
                         </a>
