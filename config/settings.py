@@ -198,6 +198,24 @@ MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
 # Base URL for callbacks (must be HTTPS in production). Daraja will POST to {MPESA_CALLBACK_BASE_URL}/payments/mpesa/callback/
 MPESA_CALLBACK_BASE_URL = os.environ.get('MPESA_CALLBACK_BASE_URL', 'https://yourdomain.com')
 
+# Paystack (same endpoints for test/live; keys selected by env)
+PAYSTACK_ENV = os.environ.get('PAYSTACK_ENV', 'sandbox').lower()  # sandbox | live
+PAYSTACK_BASE_URL = os.environ.get('PAYSTACK_BASE_URL', 'https://api.paystack.co')
+PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY', '')
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', '')
+PAYSTACK_TEST_PUBLIC_KEY = os.environ.get('PAYSTACK_TEST_PUBLIC_KEY', '')
+PAYSTACK_TEST_SECRET_KEY = os.environ.get('PAYSTACK_TEST_SECRET_KEY', '')
+PAYSTACK_LIVE_PUBLIC_KEY = os.environ.get('PAYSTACK_LIVE_PUBLIC_KEY', '')
+PAYSTACK_LIVE_SECRET_KEY = os.environ.get('PAYSTACK_LIVE_SECRET_KEY', '')
+PAYSTACK_CALLBACK_BASE_URL = os.environ.get('PAYSTACK_CALLBACK_BASE_URL', '')
+
+if PAYSTACK_ENV == 'live':
+    PAYSTACK_PUBLIC_KEY_ACTIVE = PAYSTACK_LIVE_PUBLIC_KEY or PAYSTACK_PUBLIC_KEY
+    PAYSTACK_SECRET_KEY_ACTIVE = PAYSTACK_LIVE_SECRET_KEY or PAYSTACK_SECRET_KEY
+else:
+    PAYSTACK_PUBLIC_KEY_ACTIVE = PAYSTACK_TEST_PUBLIC_KEY or PAYSTACK_PUBLIC_KEY
+    PAYSTACK_SECRET_KEY_ACTIVE = PAYSTACK_TEST_SECRET_KEY or PAYSTACK_SECRET_KEY
+
 # Django Unfold Configuration – light theme, red/valentine colours
 UNFOLD = {
     "SITE_TITLE": "Mali Safi Escorts Admin",

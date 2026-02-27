@@ -207,9 +207,14 @@ def subscribe(request):
     phone_number = request.POST.get('phone_number', '').strip()
     logger.warning('[subscribe] payment_method=%r phone_number=%r', payment_method, phone_number or '(empty)')
 
-    if not payment_method or not phone_number:
-        logger.warning('[subscribe] REDIRECT → review (missing payment_method or phone_number)')
-        messages.error(request, "Please provide payment method and phone number.")
+    if not payment_method:
+        logger.warning('[subscribe] REDIRECT → review (missing payment_method)')
+        messages.error(request, "Please select a payment method.")
+        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
+
+    if payment_method != 'paystack' and not phone_number:
+        logger.warning('[subscribe] REDIRECT → review (missing phone_number for non-paystack method)')
+        messages.error(request, "Please provide your phone number.")
         return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
 
     # Validate promo code if provided
@@ -263,6 +268,39 @@ def subscribe(request):
     if phone_number:
         request.user.phone_number = phone_number
         request.user.save(update_fields=['phone_number'])
+
+    if payment_method == 'paystack':
+        from payments.services import PaystackService
+
+        callback_path = reverse('payments:paystack_callback')
+        callback_base_url = getattr(settings, 'PAYSTACK_CALLBACK_BASE_URL', '').rstrip('/')
+        callback_url = f'{callback_base_url}{callback_path}' if callback_base_url else request.build_absolute_uri(callback_path)
+        email = (request.user.email or f'user{request.user.id}@example.com').strip()
+        metadata = {
+            'payment_id': payment.id,
+            'user_id': request.user.id,
+            'plan_id': plan.id,
+            'billing_period': billing_period,
+        }
+
+        logger.warning('[subscribe] Initializing Paystack payment_id=%s email=%s amount=%s', payment.id, email, final_price)
+        result = PaystackService().initialize_transaction(
+            email=email,
+            amount=final_price,
+            reference=transaction_ref,
+            callback_url=callback_url,
+            metadata=metadata,
+            currency=payment.currency,
+        )
+        logger.warning('[subscribe] Paystack init result success=%s error=%s', result.get('success'), result.get('error_message', ''))
+
+        if result.get('success'):
+            return redirect(result.get('authorization_url'))
+
+        payment.status = 'failed'
+        payment.save(update_fields=['status', 'updated_at'])
+        messages.error(request, result.get('error_message') or 'Could not initialize Paystack payment.')
+        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
 
     # M-Pesa prompt (STK Push): trigger prompt and redirect to waiting page
     if payment_method != 'mpesa':

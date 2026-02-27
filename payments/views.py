@@ -3,16 +3,77 @@ M-Pesa callback (Daraja posts here), status poll (when no callback URL), and hel
 """
 import json
 import logging
-from django.http import HttpResponse, JsonResponse
+from datetime import timedelta
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_GET
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
 
 from .models import MpesaTransaction
+from .services import PaystackService
 
 logger = logging.getLogger(__name__)
+
+
+def activate_payment(payment, provider_reference=''):
+    """
+    Mark payment as completed and activate subscription if this is a subscription payment.
+    """
+    from subscriptions.models import Subscription
+
+    update_fields = []
+    if payment.status != 'completed':
+        payment.status = 'completed'
+        update_fields.append('status')
+
+    if provider_reference:
+        payment.transaction_reference = provider_reference
+        update_fields.append('transaction_reference')
+
+    if update_fields:
+        update_fields.append('updated_at')
+        payment.save(update_fields=update_fields)
+
+    # Non-subscription payment (tokens/tips/ppv) can be handled separately later.
+    if not payment.plan:
+        return
+
+    # After successful payment, mark user verified so they can access escorts.
+    user = payment.user
+    if not user.is_verified:
+        user.is_verified = True
+        user.save(update_fields=['is_verified'])
+
+    billing_days = (
+        30 if payment.billing_period in ('monthly', 'once')
+        else 90 if payment.billing_period == 'quarterly'
+        else 365
+    )
+    subscription, created = Subscription.objects.get_or_create(
+        user=payment.user,
+        defaults={
+            'plan': payment.plan,
+            'billing_period': payment.billing_period,
+            'status': 'active',
+            'current_period_start': timezone.now(),
+            'current_period_end': timezone.now() + timedelta(days=billing_days),
+        },
+    )
+    if not created:
+        subscription.plan = payment.plan
+        subscription.billing_period = payment.billing_period
+        subscription.status = 'active'
+        subscription.current_period_start = timezone.now()
+        subscription.current_period_end = timezone.now() + timedelta(days=billing_days)
+        subscription.save()
+
+    if payment.billing_period == 'once':
+        subscription.auto_renew = False
+        subscription.save(update_fields=['auto_renew'])
 
 
 @csrf_exempt
@@ -87,49 +148,11 @@ def _handle_successful_payment(txn: MpesaTransaction):
     if ref.startswith('sub_'):
         try:
             payment_id = ref.replace('sub_', '')
-            from subscriptions.models import Payment, Subscription
-            from django.utils import timezone
-            from datetime import timedelta
+            from subscriptions.models import Payment
 
             payment = Payment.objects.get(id=int(payment_id), status='pending')
-            payment.status = 'completed'
-            payment.transaction_reference = txn.mpesa_receipt_number or txn.checkout_request_id
-            payment.save(update_fields=['status', 'transaction_reference', 'updated_at'])
-
-            # After successful payment, mark user verified so they can access escorts
-            user = payment.user
-            if not user.is_verified:
-                user.is_verified = True
-                user.save(update_fields=['is_verified'])
-
-            plan = payment.plan
-            billing_days = (
-                30 if payment.billing_period in ('monthly', 'once')
-                else 90 if payment.billing_period == 'quarterly'
-                else 365
-            )
-            subscription, created = Subscription.objects.get_or_create(
-                user=payment.user,
-                defaults={
-                    'plan': plan,
-                    'billing_period': payment.billing_period,
-                    'status': 'active',
-                    'current_period_start': timezone.now(),
-                    'current_period_end': timezone.now() + timedelta(days=billing_days),
-                },
-            )
-            if not created:
-                subscription.plan = plan
-                subscription.billing_period = payment.billing_period
-                subscription.status = 'active'
-                subscription.current_period_start = timezone.now()
-                subscription.current_period_end = timezone.now() + timedelta(days=billing_days)
-                subscription.save()
-            # One-time plans: no auto-renew
-            if payment.billing_period == 'once':
-                subscription.auto_renew = False
-                subscription.save(update_fields=['auto_renew'])
-            logger.info('Subscription activated for payment %s (M-Pesa %s), user verified=%s', payment_id, txn.mpesa_receipt_number, user.is_verified)
+            activate_payment(payment, provider_reference=txn.mpesa_receipt_number or txn.checkout_request_id)
+            logger.info('Subscription activated for payment %s (M-Pesa %s)', payment_id, txn.mpesa_receipt_number)
         except (ValueError, Payment.DoesNotExist) as e:
             logger.exception('Could not activate subscription for M-Pesa ref %s: %s', ref, e)
 
@@ -211,3 +234,38 @@ def mpesa_status(request, payment_id):
         'paid': False,
         'message': result.get('result_desc') or 'Waiting for payment on your phone.',
     })
+
+
+@require_GET
+def paystack_callback(request):
+    """
+    Browser return URL from Paystack hosted checkout.
+    """
+    from subscriptions.models import Payment
+
+    reference = (request.GET.get('reference') or request.GET.get('trxref') or '').strip()
+    if not reference:
+        messages.error(request, 'Missing Paystack reference.')
+        return redirect('subscriptions:plans')
+
+    payment = Payment.objects.filter(transaction_reference=reference).first()
+    if not payment:
+        messages.error(request, 'Payment not found for this reference.')
+        return redirect('subscriptions:plans')
+
+    service = PaystackService()
+    result = service.verify_transaction(reference)
+    if not result.get('success'):
+        logger.warning('[paystack] verify failed reference=%s error=%s', reference, result.get('error_message'))
+        messages.error(request, result.get('error_message') or 'Could not verify payment. Please try again.')
+        return redirect('subscriptions:manage')
+
+    if result.get('paid'):
+        activate_payment(payment, provider_reference=result.get('reference') or reference)
+        messages.success(request, 'Payment confirmed. Your subscription is active.')
+    else:
+        payment.status = 'failed'
+        payment.save(update_fields=['status', 'updated_at'])
+        messages.error(request, result.get('error_message') or 'Payment was not completed.')
+
+    return redirect('subscriptions:manage')

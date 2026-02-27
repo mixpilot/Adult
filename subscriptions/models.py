@@ -161,6 +161,7 @@ class Payment(models.Model):
     ]
     
     PAYMENT_METHOD_CHOICES = [
+        ('paystack', 'Paystack'),
         ('mpesa', 'M-Pesa'),
         ('airtel_money', 'Airtel Money'),
         ('mtn_mobile_money', 'MTN Mobile Money'),
@@ -375,6 +376,7 @@ class PayPerViewPurchase(models.Model):
     """Pay-per-view content purchases."""
     PAYMENT_METHOD_CHOICES = [
         ('tokens', 'Tokens'),
+        ('paystack', 'Paystack'),
         ('mpesa', 'M-Pesa'),
         ('airtel_money', 'Airtel Money'),
         ('mtn_mobile_money', 'MTN Mobile Money'),
@@ -405,6 +407,7 @@ class Tip(models.Model):
     """Tips to creators."""
     PAYMENT_METHOD_CHOICES = [
         ('tokens', 'Tokens'),
+        ('paystack', 'Paystack'),
         ('mpesa', 'M-Pesa'),
         ('airtel_money', 'Airtel Money'),
         ('mtn_mobile_money', 'MTN Mobile Money'),

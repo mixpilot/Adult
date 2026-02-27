@@ -201,7 +201,7 @@
                         </div>
                     </div>
 
-                    <!-- Payment Form: POSTs to subscribe view to trigger M-Pesa STK push -->
+                    <!-- Payment Form: POSTs to subscribe view to trigger Paystack or M-Pesa -->
                     <form id="paymentForm" method="post" action="{% url 'subscriptions:subscribe' %}">
                         {% csrf_token %}
                         <input type="hidden" name="plan" value="{{ plan.id }}">
@@ -213,7 +213,7 @@
                         <h5 class="mb-3">Payment Details</h5>
 
                         <div class="alert alert-success mb-3">
-                            <strong><i class="bi bi-phone"></i> M-Pesa (recommended)</strong> – We’ll send a payment prompt to your phone. Enter your PIN and you’re done. No USSD or Pay Bill steps.
+                            <strong><i class="bi bi-shield-lock"></i> Paystack (recommended)</strong> – You’ll be redirected to Paystack to complete payment securely, then returned automatically.
                         </div>
                         
                         <div class="mb-3">
@@ -221,16 +221,16 @@
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <div class="form-check border rounded p-3 {% if request.GET.payment != 'other' %}border-primary{% endif %}">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="mpesa" value="mpesa" checked>
-                                        <label class="form-check-label fw-bold" for="mpesa">
-                                            <i class="bi bi-phone text-success"></i> M-Pesa (prompt on phone)
+                                        <input class="form-check-input" type="radio" name="payment_method" id="paystack" value="paystack" checked onchange="togglePhoneRequirement()">
+                                        <label class="form-check-label fw-bold" for="paystack">
+                                            <i class="bi bi-credit-card text-success"></i> Paystack (Card / Bank / Mobile Money)
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check border rounded p-3">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="airtel" value="airtel_money">
-                                        <label class="form-check-label" for="airtel">Airtel Money</label>
+                                        <input class="form-check-input" type="radio" name="payment_method" id="mpesa" value="mpesa" onchange="togglePhoneRequirement()">
+                                        <label class="form-check-label" for="mpesa">M-Pesa (prompt on phone)</label>
                                     </div>
                                 </div>
                                 {% comment %} <div class="col-md-6">
@@ -241,24 +241,24 @@
                                 </div> {% endcomment %}
                                 <div class="col-md-6">
                                     <div class="form-check border rounded p-3">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="other" value="mobile_money">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="other" value="mobile_money" onchange="togglePhoneRequirement()">
                                         <label class="form-check-label" for="other">Other (Pay Bill)</label>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4" id="phoneNumberGroup" style="display: none;">
                             <label for="phone_number" class="form-label"><strong>M-Pesa / Mobile Money phone number</strong></label>
                             <input type="text" class="form-control form-control-lg" id="phone_number" name="phone_number" 
-                                   placeholder="e.g. 0712345678 or 254712345678" pattern="[0-9+\-\s()]+" required
+                                   placeholder="e.g. 0712345678 or 254712345678" pattern="[0-9+\-\s()]+"
                                    value="{% if user.phone_number %}{{ user.phone_number }}{% endif %}">
-                            <small class="form-text text-muted">We’ll send the payment request to this number. Use 07... or 254...</small>
+                            <small class="form-text text-muted">Required only for M-Pesa and other mobile-money manual options.</small>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" form="paymentForm" class="btn btn-primary btn-lg" name="pay_mpesa" value="1">
-                                <i class="bi bi-phone"></i> Pay KSh {{ final_price|floatformat:0 }} with M-Pesa
+                            <button type="submit" form="paymentForm" class="btn btn-primary btn-lg" name="pay_now" value="1">
+                                <i class="bi bi-shield-lock"></i> Continue to Payment - KSh {{ final_price|floatformat:0 }}
                             </button>
                             <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Back to Plans
@@ -280,5 +280,17 @@ function selectBillingPeriod(period) {
 function updateReview() {
     document.getElementById('reviewForm').submit();
 }
+
+function togglePhoneRequirement() {
+    var selected = document.querySelector('input[name="payment_method"]:checked');
+    var needsPhone = selected && selected.value !== 'paystack';
+    var group = document.getElementById('phoneNumberGroup');
+    var input = document.getElementById('phone_number');
+
+    group.style.display = needsPhone ? 'block' : 'none';
+    input.required = !!needsPhone;
+}
+
+document.addEventListener('DOMContentLoaded', togglePhoneRequirement);
 </script>
 {% endblock %}

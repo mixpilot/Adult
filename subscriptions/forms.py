@@ -30,6 +30,7 @@ class SubscriptionForm(forms.Form):
     )
     payment_method = forms.ChoiceField(
         choices=[
+            ('paystack', 'Paystack'),
             ('mpesa', 'M-Pesa'),
             ('airtel_money', 'Airtel Money'),
             ('mtn_mobile_money', 'MTN Mobile Money'),
@@ -39,7 +40,7 @@ class SubscriptionForm(forms.Form):
             ('mobile_money', 'Other Mobile Money'),
         ],
         widget=forms.RadioSelect,
-        initial='mpesa',
+        initial='paystack',
         label='Payment Method'
     )
     phone_number = forms.CharField(
@@ -89,6 +90,7 @@ class TokenPurchaseForm(forms.Form):
     )
     payment_method = forms.ChoiceField(
         choices=[
+            ('paystack', 'Paystack'),
             ('mpesa', 'M-Pesa'),
             ('airtel_money', 'Airtel Money'),
             ('mtn_mobile_money', 'MTN Mobile Money'),
@@ -98,7 +100,7 @@ class TokenPurchaseForm(forms.Form):
             ('mobile_money', 'Other Mobile Money'),
         ],
         widget=forms.RadioSelect,
-        initial='mpesa',
+        initial='paystack',
         label='Payment Method'
     )
     phone_number = forms.CharField(
@@ -137,6 +139,7 @@ class TipForm(forms.Form):
     payment_method = forms.ChoiceField(
         choices=[
             ('tokens', 'Use Tokens'),
+            ('paystack', 'Paystack'),
             ('mpesa', 'M-Pesa'),
             ('airtel_money', 'Airtel Money'),
             ('mtn_mobile_money', 'MTN Mobile Money'),

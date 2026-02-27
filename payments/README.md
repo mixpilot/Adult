@@ -1,6 +1,10 @@
-# Payments app – M-Pesa STK Push (prompt) only
+# Payments app – M-Pesa + Paystack
 
-This app handles **only** M-Pesa prompts (Safaricom Daraja API – Lipa Na M-Pesa Online / STK Push). Other payment methods (Airtel Money, manual M-Pesa Pay Bill, etc.) remain in the **subscriptions** app.
+This app handles:
+- **M-Pesa prompts** (Safaricom Daraja API – Lipa Na M-Pesa Online / STK Push).
+- **Paystack checkout callback verification**.
+
+Other payment methods (Airtel Money, manual M-Pesa Pay Bill, etc.) remain in the **subscriptions** app.
 
 ## Flow
 
@@ -25,9 +29,23 @@ In `config/settings.py` (or environment variables):
 
 For **local testing**, use a tunnel (e.g. ngrok) and set `MPESA_CALLBACK_BASE_URL` to your public URL (e.g. `https://abc123.ngrok.io`).
 
+### Paystack
+
+| Setting | Description |
+|--------|-------------|
+| `PAYSTACK_ENV` | `sandbox` or `live` |
+| `PAYSTACK_PUBLIC_KEY` | Fallback public key |
+| `PAYSTACK_SECRET_KEY` | Fallback secret key |
+| `PAYSTACK_TEST_PUBLIC_KEY` | Test public key (used when `PAYSTACK_ENV=sandbox`) |
+| `PAYSTACK_TEST_SECRET_KEY` | Test secret key (used when `PAYSTACK_ENV=sandbox`) |
+| `PAYSTACK_LIVE_PUBLIC_KEY` | Live public key (used when `PAYSTACK_ENV=live`) |
+| `PAYSTACK_LIVE_SECRET_KEY` | Live secret key (used when `PAYSTACK_ENV=live`) |
+| `PAYSTACK_BASE_URL` | Defaults to `https://api.paystack.co` |
+
 ## URLs
 
 - `POST /payments/mpesa/callback/` – Daraja callback (CSRF exempt). Do not require auth.
+- `GET /payments/paystack/callback/` – User redirect URL from Paystack after payment; verifies transaction and activates subscription.
 
 ## Models
 
