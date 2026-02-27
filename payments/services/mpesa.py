@@ -59,7 +59,16 @@ class MpesaService:
                 token = data['access_token']
                 _mpesa_token_cache = {'token': token, 'expires_at': now + _TOKEN_CACHE_SECONDS}
                 return token
-        except (HTTPError, URLError, KeyError) as e:
+        except HTTPError as e:
+            try:
+                error_body = e.read().decode() if hasattr(e, 'fp') and e.fp else ''
+            except:
+                error_body = ''
+            logger.exception('M-Pesa OAuth failed: HTTP %s - %s', e.code, error_body)
+            logger.warning('OAuth URL: %s', url)
+            logger.warning('Credentials length - Key: %d, Secret: %d', len(self.consumer_key), len(self.consumer_secret))
+            raise MpesaServiceError(f'Could not get M-Pesa access token: HTTP {e.code} - {error_body or str(e)}') from e
+        except (URLError, KeyError) as e:
             logger.exception('M-Pesa OAuth failed: %s', e)
             raise MpesaServiceError('Could not get M-Pesa access token') from e
 

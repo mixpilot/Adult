@@ -1,5 +1,62 @@
+# Core Django and Web Framework
 Django>=5.0.0,<6.0.0
+asgiref>=3.11.0
+sqlparse>=0.5.5
+pytz>=2025.2
+tzdata>=2025.3
+
+# Database
+psycopg2-binary>=2.9.9
+dj-database-url>=3.1.0
+
+# Image Processing
 Pillow>=10.0.0
+
+# Payment Processing
 stripe>=7.0.0
+
+# Django Admin Theme
 django-unfold>=0.78.0
+
+# Environment Variables
 python-dotenv>=1.0.0
+
+# HTTP Requests
+requests>=2.31.0
+urllib3>=2.6.3
+certifi>=2026.1.4
+charset-normalizer>=3.4.4
+idna>=3.11
+
+# Django REST Framework (if using API)
+djangorestframework>=3.16.1
+djangorestframework_simplejwt>=5.5.1
+drf-yasg>=1.21.14
+
+# CORS Headers
+django-cors-headers>=4.9.0
+
+# Production Server
+gunicorn>=20.1.0
+
+# Static Files
+whitenoise>=6.2.0
+
+# Testing (optional)
+pytest>=8.4.2
+pluggy>=1.6.0
+iniconfig>=2.3.0
+
+# Utilities
+PyJWT>=2.10.1
+PyYAML>=6.0.3
+uritemplate>=4.2.0
+inflection>=0.5.1
+typing_extensions>=4.15.0
+Pygments>=2.19.2
+colorama>=0.4.6
+packaging>=25.0
+
+# Excel Support (if needed)
+openpyxl>=3.1.5
+et_xmlfile>=2.0.0
