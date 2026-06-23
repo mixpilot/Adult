@@ -9,6 +9,8 @@ This app handles **only** M-Pesa prompts (Safaricom Daraja API – Lipa Na M-Pes
 3. **Payments** app calls Daraja API (OAuth + STK Push). User receives prompt on their phone.
 4. User enters M-Pesa PIN on phone. Safaricom sends result to our **callback URL**.
 5. **Payments** callback view receives the result, updates `MpesaTransaction`, and activates the subscription (completes `Payment`, creates/updates `Subscription`).
+6. The waiting page **polls local DB only** (`/payments/mpesa/status/<id>/`) — no Daraja query on each poll.
+7. **Background reconcile** (`python manage.py reconcile_mpesa`) queries Daraja for pending transactions that missed the callback (run via cron every 2–5 minutes).
 
 ## Configuration
 
@@ -20,6 +22,7 @@ In `config/settings.py` (or environment variables):
 | `MPESA_CONSUMER_KEY` | Daraja app consumer key |
 | `MPESA_CONSUMER_SECRET` | Daraja app consumer secret |
 | `MPESA_SHORTCODE` | Paybill or Till number |
+| `MPESA_SHORTCODE_TYPE` | `till` (Buy Goods / `CustomerBuyGoodsOnline`) or `paybill` (`CustomerPayBillOnline`). Default: `till`. |
 | `MPESA_PASSKEY` | Lipa Na M-Pesa passkey from Daraja |
 | `MPESA_CALLBACK_BASE_URL` | Base URL for callbacks (must be HTTPS in production). Callback path: `{MPESA_CALLBACK_BASE_URL}/payments/mpesa/callback/` |
 
@@ -27,7 +30,23 @@ For **local testing**, use a tunnel (e.g. ngrok) and set `MPESA_CALLBACK_BASE_UR
 
 ## URLs
 
+- `GET /payments/mpesa/callback/` – Health check (returns JSON `status: ok`). Use to verify the URL is public.
 - `POST /payments/mpesa/callback/` – Daraja callback (CSRF exempt). Do not require auth.
+- `GET /payments/mpesa/status/<payment_id>/` – Local status poll (auth required). Reads DB only; updated by callback.
+
+## Background reconcile (missed callbacks)
+
+```bash
+python manage.py reconcile_mpesa
+# Optional: only txns pending 2+ minutes, max 10 per run
+python manage.py reconcile_mpesa --min-age 120 --limit 10
+```
+
+**Cron example** (every 3 minutes):
+
+```cron
+*/3 * * * * cd /path/to/Adult && ./venv/bin/python manage.py reconcile_mpesa >> /var/log/mpesa_reconcile.log 2>&1
+```
 
 ## Models
 

@@ -206,7 +206,9 @@ TOKEN_PRICE = 13.00  # KSh 13.00 per token (approximately $0.10)
 CREATOR_REVENUE_SHARE = 70  # 70% to creator, 30% to platform
 
 # M-Pesa (Daraja API) – STK Push / prompt only
-MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')  # sandbox | production
+# Accept: sandbox | production | live | prod (live/prod → production API)
+_raw_mpesa_env = os.environ.get('MPESA_ENV', 'sandbox').strip().lower()
+MPESA_ENV = 'sandbox' if _raw_mpesa_env == 'sandbox' else 'production'
 # Daraja API Credentials (remove spaces when copying from portal)
 # Consumer Key from image: TGmqAz7jqABXKbkzDvnVHhxhqaExuS21pTz F7Bzab3uuiUwH (space removed)
 # Consumer Secret from image: ws93rCpBMO9EyUJr16LmGAyXA4bEYOGA3I WiPWaqosf66NsgRzBGgIN7weR6q4hQ (space removed)
@@ -214,6 +216,12 @@ MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', 'TGmqAz7jqABXKbkzDvnVH
 MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', 'ws93rCpBMO9EyUJr16LmGAyXA4bEY0GA3lWiPWaqosf66NsgRzBGglN7weR6q4hQ').strip().replace(' ', '')
 MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '174379')  # Test shortcode for sandbox
 MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')  # Test passkey for sandbox
+# till = Buy Goods (CustomerBuyGoodsOnline) | paybill = Pay Bill (CustomerPayBillOnline)
+MPESA_SHORTCODE_TYPE = os.environ.get('MPESA_SHORTCODE_TYPE', 'till').strip().lower()
+# Till STK: BusinessShortCode = head office / agent number (passkey is for this number).
+# PartyB = till / store number — set MPESA_TILL_NUMBER (or MPESA_PARTY_B).
+MPESA_TILL_NUMBER = os.environ.get('MPESA_TILL_NUMBER', '').strip() or None
+MPESA_PARTY_B = os.environ.get('MPESA_PARTY_B', '').strip() or MPESA_TILL_NUMBER or None
 # Base URL for callbacks (must be HTTPS in production). Daraja will POST to {MPESA_CALLBACK_BASE_URL}/payments/mpesa/callback/
 # For local testing, use ngrok: https://your-ngrok-url.ngrok.io
 # For sandbox testing, you can use a placeholder - the system will use status polling as fallback
