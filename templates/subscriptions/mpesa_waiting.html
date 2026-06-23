@@ -23,16 +23,14 @@
                         <p class="mb-0"><strong>Plan:</strong> {{ payment.plan.name }} ({{ payment.billing_period }})</p>
                     </div>
                     <p class="text-muted small mb-2">
-                        We check payment status every 15 seconds. Complete the payment on your phone and we’ll update this page automatically.
+                        When you pay, Safaricom notifies us automatically. This page will update within a few seconds.
                     </p>
-                    <p class="text-muted small mb-0" id="poll-status">Checking…</p>
+                    <div class="spinner-border text-primary my-2" role="status" id="poll-spinner">
+                        <span class="visually-hidden">Waiting…</span>
+                    </div>
+                    <p class="text-muted small mb-0" id="poll-status">Waiting for payment on your phone…</p>
                     <div class="mt-4" id="action-buttons">
-                        {% comment %}
-                        <a href="{% url 'subscriptions:manage' %}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> Check subscription status
-                        </a>
-                        {% endcomment %}
-                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary btn-lg">
                             <i class="bi bi-arrow-left"></i> Back to plans
                         </a>
                     </div>
@@ -47,25 +45,35 @@
 (function() {
     var statusUrl = document.getElementById('mpesa-waiting').getAttribute('data-status-url');
     var statusEl = document.getElementById('poll-status');
+    var spinnerEl = document.getElementById('poll-spinner');
     var failedEl = document.getElementById('failed-message');
-    var intervalMs = 15000;
-    var maxPolls = 40;
+    var intervalMs = 3000;
+    var maxPolls = 120;
     var pollCount = 0;
     var timer;
 
+    function stopPolling() {
+        if (timer) clearInterval(timer);
+        if (spinnerEl) spinnerEl.classList.add('d-none');
+    }
+
     function poll() {
         if (pollCount >= maxPolls) {
-            statusEl.textContent = 'Taking longer than usual. Use the button below to check your subscription.';
-            if (timer) clearInterval(timer);
+            statusEl.textContent = 'Still waiting. If you completed payment, check your subscription in a minute or contact support.';
+            stopPolling();
             return;
         }
         pollCount += 1;
-        fetch(statusUrl, { method: 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch(statusUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.paid && data.status === 'completed') {
                     statusEl.textContent = 'Payment confirmed! Redirecting…';
-                    if (timer) clearInterval(timer);
+                    stopPolling();
                     window.location.href = '{% url "subscriptions:manage" %}';
                     return;
                 }
@@ -74,26 +82,18 @@
                     failedEl.classList.remove('d-none');
                     failedEl.className = 'mt-3 alert alert-danger';
                     failedEl.textContent = data.message || 'Payment failed or was cancelled.';
-                    if (timer) clearInterval(timer);
+                    stopPolling();
                     return;
                 }
-                statusEl.textContent = data.message || ('Waiting for payment… (check ' + pollCount + ')');
-                if (data.rate_limit && timer) {
-                    clearInterval(timer);
-                    intervalMs = 20000;
-                    timer = setInterval(poll, intervalMs);
-                }
+                statusEl.textContent = data.message || 'Waiting for payment on your phone…';
             })
             .catch(function() {
-                statusEl.textContent = 'Checking… (attempt ' + pollCount + ')';
+                statusEl.textContent = 'Checking status…';
             });
     }
 
-    // First poll after 15s to avoid Daraja rate limit (5 req/min; subscribe already used 2)
-    setTimeout(function() {
-        poll();
-        timer = setInterval(poll, intervalMs);
-    }, 15000);
+    poll();
+    timer = setInterval(poll, intervalMs);
 })();
 </script>
 {% endblock %}

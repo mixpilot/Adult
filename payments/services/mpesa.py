@@ -13,6 +13,8 @@ from urllib.error import HTTPError, URLError
 
 from django.conf import settings
 
+from .errors import humanize_stk_failure
+
 logger = logging.getLogger(__name__)
 
 # Daraja sandbox allows ~5 requests per 60s. Cache token to avoid OAuth on every status poll.
@@ -34,7 +36,22 @@ class MpesaService:
         self.consumer_secret = getattr(settings, 'MPESA_CONSUMER_SECRET', '')
         self.shortcode = getattr(settings, 'MPESA_SHORTCODE', '')
         self.passkey = getattr(settings, 'MPESA_PASSKEY', '')
+        self.shortcode_type = getattr(settings, 'MPESA_SHORTCODE_TYPE', 'till').lower()
         self.env = getattr(settings, 'MPESA_ENV', 'sandbox').lower()
+        till_number = getattr(settings, 'MPESA_TILL_NUMBER', None) or getattr(settings, 'MPESA_PARTY_B', None)
+        if self.shortcode_type == 'till':
+            self.party_b = till_number or self.shortcode
+            if self.party_b == self.shortcode and self.env == 'production':
+                logger.warning(
+                    '[mpesa] Till STK: MPESA_SHORTCODE and till number are the same (%s). '
+                    'Safaricom usually requires MPESA_SHORTCODE=head office agent number and '
+                    'MPESA_TILL_NUMBER=your till. Error 2002 if misconfigured.',
+                    self.shortcode,
+                )
+        else:
+            self.party_b = self.shortcode
+        if self.env not in ('sandbox', 'production'):
+            logger.warning('[mpesa] Unknown MPESA_ENV=%r; use sandbox or production', self.env)
         self._base_url = (
             'https://sandbox.safaricom.co.ke'
             if self.env == 'sandbox'
@@ -61,13 +78,23 @@ class MpesaService:
                 return token
         except HTTPError as e:
             try:
-                error_body = e.read().decode() if hasattr(e, 'fp') and e.fp else ''
-            except:
+                error_body = e.read().decode(errors='replace')
+            except Exception:
                 error_body = ''
             logger.exception('M-Pesa OAuth failed: HTTP %s - %s', e.code, error_body)
-            logger.warning('OAuth URL: %s', url)
+            logger.warning('OAuth URL: %s (MPESA_ENV=%s)', url, self.env)
             logger.warning('Credentials length - Key: %d, Secret: %d', len(self.consumer_key), len(self.consumer_secret))
-            raise MpesaServiceError(f'Could not get M-Pesa access token: HTTP {e.code} - {error_body or str(e)}') from e
+            hint = ''
+            if e.code == 400 and self.env == 'production':
+                hint = (
+                    ' Check that consumer key/secret are from a Production app on Daraja '
+                    '(sandbox keys fail on api.safaricom.co.ke).'
+                )
+            elif e.code == 400 and self.env == 'sandbox':
+                hint = ' Use sandbox app credentials from developer.safaricom.co.ke.'
+            raise MpesaServiceError(
+                f'Could not get M-Pesa access token: HTTP {e.code} - {error_body or str(e)}.{hint}'
+            ) from e
         except (URLError, KeyError) as e:
             logger.exception('M-Pesa OAuth failed: %s', e)
             raise MpesaServiceError('Could not get M-Pesa access token') from e
@@ -92,6 +119,12 @@ class MpesaService:
         else:
             p = '254' + p
         return p[:12]
+
+    def _stk_transaction_type(self) -> str:
+        """Till uses Buy Goods; Paybill uses Pay Bill."""
+        if self.shortcode_type == 'paybill':
+            return 'CustomerPayBillOnline'
+        return 'CustomerBuyGoodsOnline'
 
     def initiate_stk_push(
         self,
@@ -143,20 +176,25 @@ class MpesaService:
         logger.info('[mpesa] POST %s', url)
         timestamp = self._stk_push_timestamp()
         password = self._stk_push_password()
+        transaction_type = self._stk_transaction_type()
 
         payload = {
             'BusinessShortCode': self.shortcode,
             'Password': password,
             'Timestamp': timestamp,
-            'TransactionType': 'CustomerPayBillOnline',
+            'TransactionType': transaction_type,
             'Amount': amount_int,
             'PartyA': phone,
-            'PartyB': self.shortcode,
+            'PartyB': self.party_b,
             'PhoneNumber': phone,
             'CallBackURL': callback_url,
             'AccountReference': account_reference[:12],
             'TransactionDesc': transaction_desc[:13],
         }
+        logger.info(
+            '[mpesa] STK TransactionType=%s shortcode=%s party_b=%s callback=%s',
+            transaction_type, self.shortcode, self.party_b, callback_url,
+        )
 
         req = Request(
             url,
@@ -173,15 +211,29 @@ class MpesaService:
                 data = json.loads(resp.read().decode())
                 rid = data.get('CheckoutRequestID', '')
                 mid = data.get('MerchantRequestID', '')
-                err_msg = data.get('errorMessage', '')
-                logger.info('[mpesa] STK response CheckoutRequestID=%s MerchantRequestID=%s errorMessage=%s', rid, mid, err_msg)
+                response_code = str(data.get('ResponseCode', '')).strip()
+                response_desc = data.get('ResponseDescription', '') or data.get('CustomerMessage', '')
+                err_msg = data.get('errorMessage', '') or response_desc
+                logger.warning(
+                    '[mpesa] STK response ResponseCode=%s ResponseDescription=%s CheckoutRequestID=%s keys=%s',
+                    response_code, response_desc, (rid or '')[:24], list(data.keys()),
+                )
+                if response_code and response_code != '0':
+                    logger.warning('[mpesa] STK rejected: %s', err_msg or response_desc)
+                    return {
+                        'success': False,
+                        'checkout_request_id': '',
+                        'merchant_request_id': '',
+                        'error_message': err_msg or response_desc or f'M-Pesa rejected request (code {response_code})',
+                    }
                 if rid:
-                    logger.info('[mpesa] STK success')
+                    logger.info('[mpesa] STK accepted for processing')
                     return {
                         'success': True,
                         'checkout_request_id': rid,
                         'merchant_request_id': mid,
                         'error_message': '',
+                        'customer_message': response_desc,
                     }
                 logger.warning('[mpesa] STK API returned error: %s', err_msg or 'Unknown')
                 return {
