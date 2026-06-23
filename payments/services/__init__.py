@@ -1,3 +1,4 @@
 from .mpesa import MpesaService
+from .paystack import PaystackService
 
-__all__ = ['MpesaService']
+__all__ = ['MpesaService', 'PaystackService']
