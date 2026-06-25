@@ -171,6 +171,7 @@ def review_subscription(request):
         'yearly_savings': yearly_savings,
         'user_type': user_type,
         'is_one_time_plan': getattr(plan, 'is_one_time_plan', plan.tier == 'once'),
+        'mpesa_till_number': getattr(settings, 'MPESA_TILL_NUMBER', '') or getattr(settings, 'MPESA_SHORTCODE', ''),
     }
     return render(request, 'subscriptions/review.html', context)
 
@@ -207,9 +208,13 @@ def subscribe(request):
     phone_number = request.POST.get('phone_number', '').strip()
     logger.warning('[subscribe] payment_method=%r phone_number=%r', payment_method, phone_number or '(empty)')
 
-    if not payment_method or not phone_number:
-        logger.warning('[subscribe] REDIRECT → review (missing payment_method or phone_number)')
-        messages.error(request, "Please provide payment method and phone number.")
+    allowed_methods = ('mpesa', 'mpesa_till')
+    if payment_method not in allowed_methods:
+        messages.error(request, 'Please choose M-Pesa STK Push or Pay to Till.')
+        return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
+
+    if payment_method == 'mpesa' and not phone_number:
+        messages.error(request, 'Enter your M-Pesa phone number for STK Push.')
         return redirect(f"{reverse('subscriptions:review_subscription')}?plan={plan_id}&billing_period={billing_period}")
 
     # Validate promo code if provided
@@ -264,11 +269,11 @@ def subscribe(request):
         request.user.phone_number = phone_number
         request.user.save(update_fields=['phone_number'])
 
-    # M-Pesa prompt (STK Push): trigger prompt and redirect to waiting page
-    if payment_method != 'mpesa':
-        logger.warning('[subscribe] REDIRECT → payment_instructions (payment_method=%s not mpesa)', payment_method)
-        return redirect('subscriptions:payment_instructions', payment_id=payment.id)
+    # Pay to Till: show instructions, then user submits M-Pesa receipt code
+    if payment_method == 'mpesa_till':
+        return redirect('subscriptions:till_payment', payment_id=payment.id)
 
+    # M-Pesa STK Push
     from payments.services import MpesaService
     from payments.models import MpesaTransaction
 
@@ -340,8 +345,10 @@ def manage_subscription(request):
 def mpesa_waiting(request, payment_id):
     """Shown after M-Pesa STK push was sent – user completes payment on phone."""
     payment = get_object_or_404(Payment, id=payment_id, user=request.user)
+    if payment.payment_method == 'mpesa_till':
+        return redirect('subscriptions:till_payment', payment_id=payment_id)
     if payment.payment_method != 'mpesa':
-        return redirect('subscriptions:payment_instructions', payment_id=payment_id)
+        return redirect('subscriptions:manage')
     if payment.status == 'completed':
         messages.success(request, 'Payment completed. Your subscription is active.')
         return redirect('subscriptions:manage')
@@ -351,119 +358,89 @@ def mpesa_waiting(request, payment_id):
 
 @login_required
 def payment_instructions(request, payment_id):
-    """Display mobile payment instructions."""
+    """Till payment instructions, or STK retry page for failed mpesa."""
     payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    # Get payment instructions based on method
-    payment_methods_info = {
-        'mpesa': {
-            'name': 'M-Pesa',
-            'instructions': [
-                '1. Go to M-Pesa menu on your phone',
-                '2. Select "Lipa na M-Pesa"',
-                '3. Select "Pay Bill"',
-                '4. Enter Business Number: 123456',
-                '5. Enter Account Number: {}'.format(payment.transaction_reference),
-                '6. Enter Amount: {}'.format(payment.amount),
-                '7. Enter your M-Pesa PIN',
-                '8. Confirm the transaction',
-            ],
-            'business_number': '123456',  # Replace with actual business number
-        },
-        'airtel_money': {
-            'name': 'Airtel Money',
-            'instructions': [
-                '1. Dial *185# on your phone',
-                '2. Select "Send Money"',
-                '3. Enter recipient number: 123456',
-                '4. Enter Amount: {}'.format(payment.amount),
-                '5. Enter Reference: {}'.format(payment.transaction_reference),
-                '6. Enter your PIN',
-                '7. Confirm the transaction',
-            ],
-        },
-        'mtn_mobile_money': {
-            'name': 'MTN Mobile Money',
-            'instructions': [
-                '1. Dial *165# on your phone',
-                '2. Select "Send Money"',
-                '3. Enter recipient number: 123456',
-                '4. Enter Amount: {}'.format(payment.amount),
-                '5. Enter Reference: {}'.format(payment.transaction_reference),
-                '6. Enter your PIN',
-                '7. Confirm the transaction',
-            ],
-        },
-        'tigo_pesa': {
-            'name': 'Tigo Pesa',
-            'instructions': [
-                '1. Dial *150*11# on your phone',
-                '2. Select "Send Money"',
-                '3. Enter recipient number: 123456',
-                '4. Enter Amount: {}'.format(payment.amount),
-                '5. Enter Reference: {}'.format(payment.transaction_reference),
-                '6. Enter your PIN',
-                '7. Confirm the transaction',
-            ],
-        },
-        'orange_money': {
-            'name': 'Orange Money',
-            'instructions': [
-                '1. Dial #144# on your phone',
-                '2. Select "Send Money"',
-                '3. Enter recipient number: 123456',
-                '4. Enter Amount: {}'.format(payment.amount),
-                '5. Enter Reference: {}'.format(payment.transaction_reference),
-                '6. Enter your PIN',
-                '7. Confirm the transaction',
-            ],
-        },
-        'mobile_money': {
-            'name': 'Mobile Money',
-            'instructions': [
-                '1. Use your mobile money app or USSD code',
-                '2. Send money to: 123456',
-                '3. Amount: {}'.format(payment.amount),
-                '4. Reference: {}'.format(payment.transaction_reference),
-                '5. Complete the transaction',
-            ],
-        },
-    }
-    
-    method_info = payment_methods_info.get(payment.payment_method, payment_methods_info['mobile_money'])
-    # M-Pesa is STK push only – never show paybill steps
-    use_stk_only = payment.payment_method == 'mpesa'
+
+    if payment.payment_method == 'mpesa_till':
+        return till_payment(request, payment_id)
+
     review_url = reverse('subscriptions:review_subscription') + f'?plan={payment.plan_id}&billing_period={payment.billing_period}'
-    context = {
+    return render(request, 'subscriptions/payment_instructions.html', {
         'payment': payment,
-        'method_info': method_info,
-        'transaction_ref': payment.transaction_reference,
-        'use_stk_only': use_stk_only,
         'review_url': review_url,
-    }
-    return render(request, 'subscriptions/payment_instructions.html', context)
+    })
+
+
+@login_required
+def till_payment(request, payment_id):
+    """Pay directly to M-Pesa till, then submit receipt code."""
+    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
+    till_number = getattr(settings, 'MPESA_TILL_NUMBER', '') or getattr(settings, 'MPESA_SHORTCODE', '')
+    return render(request, 'subscriptions/till_payment.html', {
+        'payment': payment,
+        'till_number': till_number,
+        'transaction_ref': payment.transaction_reference,
+    })
+
+
+def _normalize_mpesa_receipt(code: str) -> str:
+    return ''.join(c for c in (code or '').strip().upper() if c.isalnum())
+
+
+def _verify_till_receipt_code(code: str, payment: Payment):
+    """Validate M-Pesa receipt/confirmation code for till payments."""
+    from payments.models import MpesaTransaction
+
+    normalized = _normalize_mpesa_receipt(code)
+    if len(normalized) < 8:
+        return False, 'Enter the full M-Pesa confirmation code from your SMS (e.g. THJ4ABC12X).'
+
+    if Payment.objects.filter(
+        confirmation_code__iexact=normalized,
+        status='completed',
+    ).exclude(id=payment.id).exists():
+        return False, 'This M-Pesa code has already been used for another subscription.'
+
+    if MpesaTransaction.objects.filter(
+        mpesa_receipt_number__iexact=normalized,
+        status='completed',
+    ).exists():
+        return False, 'This M-Pesa code is already linked to a completed payment.'
+
+    return True, normalized
 
 
 @login_required
 def confirm_payment(request, payment_id):
-    """User confirms payment with confirmation code."""
+    """User submits M-Pesa receipt code; verify via C2B record if available."""
+    from payments.services.c2b import verify_receipt_for_payment
+
     payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
+
+    if payment.status == 'completed':
+        messages.info(request, 'This payment is already completed.')
+        return redirect('subscriptions:manage')
+
     if request.method == 'POST':
-        confirmation_code = request.POST.get('confirmation_code', '').strip()
-        
-        if confirmation_code:
-            payment.confirmation_code = confirmation_code
-            payment.status = 'pending'  # Admin will verify
-            payment.save()
-            
-            messages.success(request, "Payment confirmation received! Your subscription will be activated once we verify your payment (usually within 24 hours).")
-            return redirect('subscriptions:manage')
+        raw_code = request.POST.get('confirmation_code', '')
+        ok, result = _verify_till_receipt_code(raw_code, payment)
+        if not ok:
+            messages.error(request, result)
         else:
-            messages.error(request, "Please enter your confirmation code")
-    
+            activated, msg = verify_receipt_for_payment(payment, result)
+            if activated:
+                messages.success(request, msg)
+                return redirect('subscriptions:manage')
+            messages.info(
+                request,
+                'Code saved. If payment is not activated within a minute, we are still waiting for '
+                'M-Pesa confirmation — refresh your subscription page shortly.',
+            )
+            return redirect('subscriptions:manage')
+
     context = {
         'payment': payment,
+        'till_number': getattr(settings, 'MPESA_TILL_NUMBER', '') or getattr(settings, 'MPESA_SHORTCODE', ''),
     }
     return render(request, 'subscriptions/confirm_payment.html', context)
 

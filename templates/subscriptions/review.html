@@ -3,282 +3,181 @@
 
 {% block title %}Review Subscription - {{ plan.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.pay-steps { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.pay-step { flex: 1; text-align: center; }
+.pay-step-dot {
+    width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 0.35rem;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9rem;
+    background: #e2e8f0; color: #64748b;
+}
+.pay-step.active .pay-step-dot { background: #c41e3a; color: #fff; }
+.pay-step.done .pay-step-dot { background: #22c55e; color: #fff; }
+.pay-method-card {
+    border: 2px solid #e2e8f0; border-radius: 16px; padding: 1.25rem;
+    cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    height: 100%; background: #fff;
+}
+.pay-method-card:hover { border-color: #f8bbd9; box-shadow: 0 4px 16px rgba(196,30,58,0.08); }
+.pay-method-card.selected { border-color: #c41e3a; background: #fffafb; box-shadow: 0 4px 20px rgba(196,30,58,0.12); }
+.pay-method-card input { display: none; }
+.pay-method-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 0.75rem;
+}
+.pay-method-icon.stk { background: #dcfce7; color: #16a34a; }
+.pay-method-icon.till { background: #fce4ec; color: #c41e3a; }
+.order-total { font-size: 1.75rem; font-weight: 800; color: #c41e3a; }
+#phoneField { transition: opacity 0.2s; }
+#phoneField.hidden { display: none; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
+<div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <!-- Progress Steps -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-center flex-fill">
-                        <div class="badge bg-primary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">1</div>
-                        <p class="small mb-0">Select Plan</p>
+            <div class="pay-steps">
+                <div class="pay-step done"><div class="pay-step-dot"><i class="bi bi-check"></i></div><small>Plan</small></div>
+                <div class="pay-step active"><div class="pay-step-dot">2</div><small>Pay</small></div>
+                <div class="pay-step"><div class="pay-step-dot">3</div><small>Done</small></div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h4 class="mb-1">{{ plan.name }}</h4>
+                            <p class="text-muted mb-0 small">{{ plan.description|truncatewords:20 }}</p>
+                        </div>
+                        <span class="badge bg-light text-dark border">{% if billing_period == 'once' %}One-time{% else %}{{ billing_period|title }}{% endif %}</span>
                     </div>
-                    <div class="flex-fill text-center">
-                        <hr class="my-0">
+                    <div class="d-flex justify-content-between align-items-center py-3 border-top">
+                        <span class="text-muted">Total due</span>
+                        <span class="order-total">KSh {{ final_price|floatformat:0 }}</span>
                     </div>
-                    <div class="text-center flex-fill">
-                        <div class="badge bg-primary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">2</div>
-                        <p class="small mb-0"><strong>Review</strong></p>
-                    </div>
-                    <div class="flex-fill text-center">
-                        <hr class="my-0">
-                    </div>
-                    <div class="text-center flex-fill">
-                        <div class="badge bg-secondary rounded-circle p-2 mb-2" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">3</div>
-                        <p class="small mb-0">Payment</p>
-                    </div>
+                    {% if discount_amount > 0 %}
+                    <p class="small text-success mb-0"><i class="bi bi-tag-fill"></i> Promo applied — saved KSh {{ discount_amount|floatformat:0 }}</p>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> Review Your Subscription</h4>
-                </div>
-                <div class="card-body">
-                    <!-- Plan Summary -->
-                    <div class="card bg-light mb-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <h5 class="mb-1">{{ plan.name }}</h5>
-                                    <p class="text-muted mb-0">{{ plan.description }}</p>
-                                </div>
-                                {% if plan.tier == 'premium' %}
-                                <span class="badge bg-warning text-dark">MOST POPULAR</span>
-                                {% elif plan.tier == 'vip' %}
-                                <span class="badge bg-danger">VIP</span>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Plan Features -->
-                            <div class="row mt-3">
-                                <div class="col-md-6">
-                                    <h6 class="text-muted">Features:</h6>
-                                    <ul class="list-unstyled small">
-                                        {% if user_type == 'client' or plan.user_type == 'both' %}
-                                            {% if plan.unlimited_messaging %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Messaging</li>
-                                            {% endif %}
-                                            {% if plan.unlimited_content_access %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Content Access</li>
-                                            {% endif %}
-                                            {% if plan.ad_free %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Ad-Free Experience</li>
-                                            {% endif %}
-                                            {% if plan.advanced_search %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Advanced Search</li>
-                                            {% endif %}
-                                            {% if plan.priority_support %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Priority Support</li>
-                                            {% endif %}
-                                        {% endif %}
-                                        
-                                        {% if user_type == 'escort' or plan.user_type == 'both' %}
-                                            {% if plan.featured_listing %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Featured Listing</li>
-                                            {% endif %}
-                                            {% if plan.profile_verification_badge %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Verified Badge</li>
-                                            {% endif %}
-                                            {% if plan.unlimited_photos %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Unlimited Photos</li>
-                                            {% endif %}
-                                            {% if plan.priority_ranking %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Priority Ranking</li>
-                                            {% endif %}
-                                            {% if plan.earnings_tracking %}
-                                            <li><i class="bi bi-check-circle-fill text-success"></i> Earnings Dashboard</li>
-                                            {% endif %}
-                                        {% endif %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <form method="get" action="{% url 'subscriptions:review_subscription' %}" id="reviewForm" class="d-none">
+                <input type="hidden" name="plan" value="{{ plan.id }}">
+                <input type="hidden" name="billing_period" value="{{ billing_period }}">
+            </form>
 
-                    <!-- Billing Period Selection -->
-                    <form method="get" action="{% url 'subscriptions:review_subscription' %}" id="reviewForm">
-                        <input type="hidden" name="plan" value="{{ plan.id }}">
-                        {% if is_one_time_plan %}
-                        <input type="hidden" name="billing_period" value="once">
-                        <div class="mb-4">
-                            <div class="card border-success">
-                                <div class="card-body text-center py-4">
-                                    <h5 class="text-success"><i class="bi bi-check2-circle"></i> One-time payment</h5>
-                                    <h3 class="mb-0">KSh {{ final_price|floatformat:0 }}</h3>
-                                    <p class="text-muted mb-0">30 days full access · No renewal</p>
-                                </div>
-                            </div>
+            {% if not is_one_time_plan %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h6 class="text-muted text-uppercase small mb-3">Billing period</h6>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="w-100 border rounded-3 p-2 text-center {% if billing_period == 'monthly' %}border-primary bg-light{% endif %}" style="cursor:pointer">
+                                <input type="radio" name="bp" class="d-none" {% if billing_period == 'monthly' %}checked{% endif %} onclick="location.href='?plan={{ plan.id }}&billing_period=monthly'">
+                                <div class="fw-bold">Monthly</div>
+                                <small>KSh {{ monthly_price|floatformat:0 }}</small>
+                            </label>
                         </div>
-                        {% else %}
-                        <div class="mb-4">
-                            <h5 class="mb-3">Select Billing Period</h5>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="card {% if billing_period == 'monthly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('monthly')">
-                                        <div class="card-body text-center">
-                                            <input type="radio" name="billing_period" value="monthly" {% if billing_period == 'monthly' %}checked{% endif %} onchange="updateReview()">
-                                            <h6 class="mt-2">Monthly</h6>
-                                            <h4 class="text-primary">KSh {{ monthly_price|floatformat:0 }}</h4>
-                                            <small class="text-muted">per month</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% if plan.price_quarterly %}
-                                <div class="col-md-4">
-                                    <div class="card {% if billing_period == 'quarterly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('quarterly')">
-                                        <div class="card-body text-center">
-                                            <input type="radio" name="billing_period" value="quarterly" {% if billing_period == 'quarterly' %}checked{% endif %} onchange="updateReview()">
-                                            <h6 class="mt-2">Quarterly</h6>
-                                            <h4 class="text-primary">KSh {{ quarterly_price|floatformat:0 }}</h4>
-                                            <small class="text-muted">per 3 months</small>
-                                            {% if quarterly_savings > 0 %}
-                                            <div class="badge bg-success mt-2">Save KSh {{ quarterly_savings|floatformat:0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% if plan.price_yearly %}
-                                <div class="col-md-4">
-                                    <div class="card {% if billing_period == 'yearly' %}border-primary{% endif %}" style="cursor: pointer;" onclick="selectBillingPeriod('yearly')">
-                                        <div class="card-body text-center">
-                                            <input type="radio" name="billing_period" value="yearly" {% if billing_period == 'yearly' %}checked{% endif %} onchange="updateReview()">
-                                            <h6 class="mt-2">Yearly</h6>
-                                            <h4 class="text-primary">KSh {{ yearly_price|floatformat:0 }}</h4>
-                                            <small class="text-muted">per year</small>
-                                            {% if yearly_savings > 0 %}
-                                            <div class="badge bg-success mt-2">Save KSh {{ yearly_savings|floatformat:0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
+                        {% if plan.price_quarterly %}
+                        <div class="col-4">
+                            <label class="w-100 border rounded-3 p-2 text-center {% if billing_period == 'quarterly' %}border-primary bg-light{% endif %}" style="cursor:pointer">
+                                <input type="radio" class="d-none" onclick="location.href='?plan={{ plan.id }}&billing_period=quarterly'">
+                                <div class="fw-bold">Quarterly</div>
+                                <small>KSh {{ quarterly_price|floatformat:0 }}</small>
+                            </label>
                         </div>
                         {% endif %}
-
-                        <!-- Promo Code -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">Promo Code (Optional)</h5>
-                            <div class="input-group">
-                                <input type="text" name="promo_code" class="form-control" placeholder="Enter promo code" value="{{ promo_code_text }}">
-                                <button class="btn btn-outline-primary" type="submit">Apply</button>
-                            </div>
-                            {% if promo_code %}
-                            <div class="alert alert-success mt-2">
-                                <i class="bi bi-check-circle"></i> Promo code "{{ promo_code.code }}" applied! 
-                                Discount: KSh {{ discount_amount|floatformat:2 }}
-                            </div>
-                            {% endif %}
+                        {% if plan.price_yearly %}
+                        <div class="col-4">
+                            <label class="w-100 border rounded-3 p-2 text-center {% if billing_period == 'yearly' %}border-primary bg-light{% endif %}" style="cursor:pointer">
+                                <input type="radio" class="d-none" onclick="location.href='?plan={{ plan.id }}&billing_period=yearly'">
+                                <div class="fw-bold">Yearly</div>
+                                <small>KSh {{ yearly_price|floatformat:0 }}</small>
+                            </label>
                         </div>
-                    </form>
-
-                    <!-- Price Summary -->
-                    <div class="card bg-light mb-4">
-                        <div class="card-body">
-                            <h5 class="mb-3">Order Summary</h5>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Plan:</span>
-                                <strong>{{ plan.name }} ({% if billing_period == 'once' %}One-time{% else %}{{ billing_period|title }}{% endif %})</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Base Price:</span>
-                                <span>KSh {{ base_price|floatformat:2 }}</span>
-                            </div>
-                            {% if discount_amount > 0 %}
-                            <div class="d-flex justify-content-between mb-2 text-success">
-                                <span>Discount:</span>
-                                <span>- KSh {{ discount_amount|floatformat:2 }}</span>
-                            </div>
-                            {% endif %}
-                            <hr>
-                            <div class="d-flex justify-content-between">
-                                <h5>Total:</h5>
-                                <h4 class="text-primary">KSh {{ final_price|floatformat:2 }}</h4>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payment Form: POSTs to subscribe view to trigger M-Pesa STK push -->
-                    <form id="paymentForm" method="post" action="{% url 'subscriptions:subscribe' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="plan" value="{{ plan.id }}">
-                        <input type="hidden" name="billing_period" value="{{ billing_period }}">
-                        {% if promo_code_text %}
-                        <input type="hidden" name="promo_code" value="{{ promo_code_text }}">
                         {% endif %}
-                        
-                        <h5 class="mb-3">Payment Details</h5>
-
-                        <div class="alert alert-success mb-3">
-                            <strong><i class="bi bi-phone"></i> M-Pesa (recommended)</strong> – We’ll send a payment prompt to your phone. Enter your PIN and you’re done. No USSD or Pay Bill steps.
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Payment Method</strong></label>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <div class="form-check border rounded p-3 {% if request.GET.payment != 'other' %}border-primary{% endif %}">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="mpesa" value="mpesa" checked>
-                                        <label class="form-check-label fw-bold" for="mpesa">
-                                            <i class="bi bi-phone text-success"></i> M-Pesa (prompt on phone)
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check border rounded p-3">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="airtel" value="airtel_money">
-                                        <label class="form-check-label" for="airtel">Airtel Money</label>
-                                    </div>
-                                </div>
-                                {% comment %} <div class="col-md-6">
-                                    <div class="form-check border rounded p-3">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="mtn" value="mtn_mobile_money">
-                                        <label class="form-check-label" for="mtn">MTN Mobile Money</label>
-                                    </div>
-                                </div> {% endcomment %}
-                                <div class="col-md-6">
-                                    <div class="form-check border rounded p-3">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="other" value="mobile_money">
-                                        <label class="form-check-label" for="other">Other (Pay Bill)</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="phone_number" class="form-label"><strong>M-Pesa / Mobile Money phone number</strong></label>
-                            <input type="text" class="form-control form-control-lg" id="phone_number" name="phone_number" 
-                                   placeholder="e.g. 0712345678 or 254712345678" pattern="[0-9+\-\s()]+" required
-                                   value="{% if user.phone_number %}{{ user.phone_number }}{% endif %}">
-                            <small class="form-text text-muted">We’ll send the payment request to this number. Use 07... or 254...</small>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" form="paymentForm" class="btn btn-primary btn-lg" name="pay_mpesa" value="1">
-                                <i class="bi bi-phone"></i> Pay KSh {{ final_price|floatformat:0 }} with M-Pesa
-                            </button>
-                            <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Plans
-                            </a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
+            {% endif %}
+
+            <form id="paymentForm" method="post" action="{% url 'subscriptions:subscribe' %}">
+                {% csrf_token %}
+                <input type="hidden" name="plan" value="{{ plan.id }}">
+                <input type="hidden" name="billing_period" value="{{ billing_period }}">
+                {% if promo_code_text %}<input type="hidden" name="promo_code" value="{{ promo_code_text }}">{% endif %}
+
+                <h5 class="mb-3">How would you like to pay?</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="pay-method-card selected w-100 mb-0" id="cardMpesa">
+                            <input type="radio" name="payment_method" value="mpesa" checked>
+                            <div class="pay-method-icon stk"><i class="bi bi-phone-vibrate"></i></div>
+                            <div class="fw-bold">M-Pesa STK Push</div>
+                            <p class="small text-muted mb-0 mt-1">Instant prompt on your phone. Enter PIN and you're done.</p>
+                            <span class="badge bg-success mt-2">Recommended</span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="pay-method-card w-100 mb-0" id="cardTill">
+                            <input type="radio" name="payment_method" value="mpesa_till">
+                            <div class="pay-method-icon till"><i class="bi bi-shop"></i></div>
+                            <div class="fw-bold">Pay to Till</div>
+                            <p class="small text-muted mb-0 mt-1">Send to till <strong>{{ mpesa_till_number }}</strong>, then enter your M-Pesa code.</p>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-4" id="phoneField">
+                    <label for="phone_number" class="form-label fw-semibold">M-Pesa phone number</label>
+                    <input type="tel" class="form-control form-control-lg" id="phone_number" name="phone_number"
+                           placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                           value="{% if user.phone_number %}{{ user.phone_number }}{% endif %}">
+                    <div class="form-text">We'll send the payment prompt to this number.</div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg py-3" id="payBtn">
+                        <i class="bi bi-phone-vibrate"></i> Pay KSh {{ final_price|floatformat:0 }} — STK Push
+                    </button>
+                    <a href="{% url 'subscriptions:plans' %}" class="btn btn-link text-muted">← Back to plans</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-function selectBillingPeriod(period) {
-    document.querySelector(`input[value="${period}"]`).checked = true;
-    updateReview();
-}
+(function() {
+    var cardMpesa = document.getElementById('cardMpesa');
+    var cardTill = document.getElementById('cardTill');
+    var phoneField = document.getElementById('phoneField');
+    var phoneInput = document.getElementById('phone_number');
+    var payBtn = document.getElementById('payBtn');
+    var amount = '{{ final_price|floatformat:0 }}';
 
-function updateReview() {
-    document.getElementById('reviewForm').submit();
-}
+    function selectMethod(method) {
+        var isStk = method === 'mpesa';
+        cardMpesa.classList.toggle('selected', isStk);
+        cardTill.classList.toggle('selected', !isStk);
+        phoneField.classList.toggle('hidden', !isStk);
+        phoneInput.required = isStk;
+        if (isStk) {
+            payBtn.innerHTML = '<i class="bi bi-phone-vibrate"></i> Pay KSh ' + amount + ' — STK Push';
+        } else {
+            payBtn.innerHTML = '<i class="bi bi-shop"></i> Continue — Pay to Till';
+        }
+    }
+
+    cardMpesa.addEventListener('click', function() { selectMethod('mpesa'); });
+    cardTill.addEventListener('click', function() { selectMethod('mpesa_till'); });
+    document.querySelectorAll('input[name="payment_method"]').forEach(function(r) {
+        r.addEventListener('change', function() { selectMethod(this.value); });
+    });
+})();
 </script>
 {% endblock %}

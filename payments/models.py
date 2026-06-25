@@ -1,6 +1,5 @@
 """
-M-Pesa STK Push (prompt) transactions only.
-This app handles only M-Pesa prompts; other payment methods stay in subscriptions.
+M-Pesa STK Push and C2B (till / paybill) transactions.
 """
 from django.db import models
 
@@ -47,3 +46,35 @@ class MpesaTransaction(models.Model):
 
     def __str__(self):
         return f"{self.account_reference} KSh {self.amount} ({self.status})"
+
+
+class C2bTransaction(models.Model):
+    """Incoming C2B payment notification from Safaricom (till / paybill)."""
+
+    trans_id = models.CharField(max_length=50, unique=True, db_index=True)
+    trans_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    trans_time = models.CharField(max_length=20, blank=True)
+    business_shortcode = models.CharField(max_length=20, blank=True)
+    bill_ref_number = models.CharField(max_length=100, blank=True, db_index=True)
+    msisdn = models.CharField(max_length=20, blank=True, db_index=True)
+    transaction_type = models.CharField(max_length=50, blank=True)
+    first_name = models.CharField(max_length=100, blank=True)
+    middle_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    raw_payload = models.JSONField(default=dict, blank=True)
+    payment = models.ForeignKey(
+        'subscriptions.Payment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='c2b_transactions',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'C2B transaction'
+        verbose_name_plural = 'C2B transactions'
+
+    def __str__(self):
+        return f"{self.trans_id} KSh {self.trans_amount}"

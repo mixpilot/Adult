@@ -1,66 +1,17 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Payment Instructions - {{ method_info.name }}{% endblock %}
+{% block title %}STK Push failed{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-phone"></i> Payment Instructions - {{ method_info.name }}</h4>
-                </div>
-                <div class="card-body">
-                    {% if use_stk_only %}
-                    <div class="alert alert-warning">
-                        <h5><i class="bi bi-phone"></i> M-Pesa: prompt on your phone only</h5>
-                        <p class="mb-0">We don’t use Pay Bill. We send a payment <strong>prompt (STK push)</strong> to your phone – you enter your PIN and you’re done. The prompt couldn’t be sent. Please try again with your M-Pesa number below.</p>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{{ review_url }}" class="btn btn-primary btn-lg w-100">
-                            <i class="bi bi-phone"></i> Try again (enter phone number)
-                        </a>
-                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary mt-2 w-100">
-                            <i class="bi bi-arrow-left"></i> Back to Plans
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <h5><i class="bi bi-info-circle"></i> Payment Details</h5>
-                        <p class="mb-1"><strong>Amount:</strong> KSh {{ payment.amount|floatformat:0 }}</p>
-                        <p class="mb-1"><strong>Transaction Reference:</strong> <code>{{ transaction_ref }}</code></p>
-                        <p class="mb-0"><strong>Phone Number:</strong> {{ payment.phone_number }}</p>
-                    </div>
-
-                    <div class="payment-instructions">
-                        <h5 class="mb-3"><i class="bi bi-list-ol"></i> Follow these steps:</h5>
-                        <ol class="list-group list-group-numbered">
-                            {% for instruction in method_info.instructions %}
-                            <li class="list-group-item">{{ instruction }}</li>
-                            {% endfor %}
-                        </ol>
-                    </div>
-
-                    <div class="alert alert-warning mt-4">
-                        <h6><i class="bi bi-exclamation-triangle"></i> Important:</h6>
-                        <ul class="mb-0">
-                            <li>Make sure to use the exact transaction reference: <strong>{{ transaction_ref }}</strong></li>
-                            <li>After completing the payment, you'll receive a confirmation code via SMS</li>
-                            <li>Enter the confirmation code below to activate your subscription</li>
-                        </ul>
-                    </div>
-
-                    <div class="mt-4">
-                        <a href="{% url 'subscriptions:confirm_payment' payment.id %}" class="btn btn-primary btn-lg w-100">
-                            <i class="bi bi-check-circle"></i> I've Completed the Payment
-                        </a>
-                        <a href="{% url 'subscriptions:plans' %}" class="btn btn-secondary mt-2 w-100">
-                            <i class="bi bi-arrow-left"></i> Back to Plans
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+        <div class="col-md-6 text-center">
+            <i class="bi bi-exclamation-circle text-warning display-1 mb-3"></i>
+            <h3>Couldn't send M-Pesa prompt</h3>
+            <p class="text-muted mb-4">Try again with STK Push, or pay directly to our till instead.</p>
+            <div class="d-grid gap-2">
+                <a href="{{ review_url }}" class="btn btn-primary btn-lg">Try STK Push again</a>
+                <a href="{% url 'subscriptions:plans' %}" class="btn btn-outline-secondary">Back to plans</a>
             </div>
         </div>
     </div>

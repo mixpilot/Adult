@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Pay to Till{% endblock %}
+
+{% block extra_css %}
+<style>
+.till-hero {
+    background: linear-gradient(135deg, #e91e63 0%, #c41e3a 100%);
+    color: #fff; border-radius: 16px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;
+}
+.till-number {
+    font-size: 2rem; font-weight: 800; letter-spacing: 0.05em;
+    background: rgba(255,255,255,0.2); border-radius: 12px;
+    padding: 0.75rem 1.25rem; display: inline-block; margin: 0.5rem 0;
+}
+.step-card { border-radius: 12px; border: 1px solid #e2e8f0; padding: 1rem 1.25rem; margin-bottom: 0.75rem; background: #fff; }
+.step-num {
+    width: 28px; height: 28px; border-radius: 50%; background: #c41e3a; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem; margin-right: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" id="till-waiting" data-status-url="{% url 'payments:mpesa_status' payment.id %}">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="till-hero">
+                <p class="mb-1 opacity-75">Pay exactly</p>
+                <h2 class="mb-2">KSh {{ payment.amount|floatformat:0 }}</h2>
+                <p class="mb-0 small">to our M-Pesa Till</p>
+                <div class="till-number">{{ till_number }}</div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="mb-3"><i class="bi bi-list-ol text-primary"></i> Steps on your phone</h5>
+
+                    <div class="step-card d-flex align-items-start">
+                        <span class="step-num">1</span>
+                        <div>Open <strong>M-Pesa</strong> → <strong>Lipa na M-Pesa</strong> → <strong>Buy Goods</strong></div>
+                    </div>
+                    <div class="step-card d-flex align-items-start">
+                        <span class="step-num">2</span>
+                        <div>Enter Till Number: <strong class="text-primary">{{ till_number }}</strong></div>
+                    </div>
+                    <div class="step-card d-flex align-items-start">
+                        <span class="step-num">3</span>
+                        <div>Enter Amount: <strong>KSh {{ payment.amount|floatformat:0 }}</strong></div>
+                    </div>
+                    <div class="step-card d-flex align-items-start">
+                        <span class="step-num">4</span>
+                        <div>Enter your M-Pesa PIN and confirm</div>
+                    </div>
+                    <div class="step-card d-flex align-items-start">
+                        <span class="step-num">5</span>
+                        <div>You'll receive an SMS with a <strong>confirmation code</strong> (e.g. THJ4ABC12X)</div>
+                    </div>
+
+                    <div class="alert alert-light border mt-3 mb-0">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        Plan: <strong>{{ payment.plan.name }}</strong>
+                        · Ref: <code>{{ transaction_ref }}</code>
+                    </div>
+
+                    <div class="alert alert-success border-0 mt-3 mb-0 small" id="auto-detect-note">
+                        <i class="bi bi-lightning-charge"></i>
+                        After you pay, we detect your payment automatically via M-Pesa.
+                        This page will update when your subscription is activated — no code needed if you used the same phone number.
+                    </div>
+                    <div class="d-none text-center py-2" id="till-poll-status">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="small text-muted ms-2">Checking for your payment…</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <a href="{% url 'subscriptions:confirm_payment' payment.id %}" class="btn btn-primary btn-lg py-3" id="enter-code-btn">
+                    <i class="bi bi-check2-circle"></i> I've paid — enter M-Pesa code
+                </a>
+                <a href="{% url 'subscriptions:review_subscription' %}?plan={{ payment.plan_id }}&billing_period={{ payment.billing_period }}" class="btn btn-outline-secondary">
+                    Try STK Push instead
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var root = document.getElementById('till-waiting');
+    if (!root) return;
+    var statusUrl = root.getAttribute('data-status-url');
+    var pollEl = document.getElementById('till-poll-status');
+    var noteEl = document.getElementById('auto-detect-note');
+    var intervalMs = 4000;
+    var maxPolls = 90;
+    var pollCount = 0;
+    var timer;
+
+    function stopPolling() {
+        if (timer) clearInterval(timer);
+    }
+
+    function poll() {
+        if (pollCount >= maxPolls) {
+            stopPolling();
+            return;
+        }
+        pollCount += 1;
+        if (pollEl) pollEl.classList.remove('d-none');
+        fetch(statusUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.paid && data.status === 'completed') {
+                    if (noteEl) {
+                        noteEl.className = 'alert alert-success border-0 mt-3 mb-0 small';
+                        noteEl.innerHTML = '<i class="bi bi-check-circle"></i> Payment confirmed! Redirecting…';
+                    }
+                    stopPolling();
+                    window.location.href = '{% url "subscriptions:manage" %}';
+                }
+            })
+            .catch(function() {})
+            .finally(function() {
+                if (pollEl && pollCount < maxPolls) pollEl.classList.add('d-none');
+            });
+    }
+
+    poll();
+    timer = setInterval(poll, intervalMs);
+})();
+</script>
+{% endblock %}

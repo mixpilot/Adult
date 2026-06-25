@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 
 from .models import MpesaTransaction
 from .services.activation import activate_payment_for_transaction
+from .services.c2b import handle_c2b_confirmation, handle_c2b_validation, try_match_pending_c2b_for_payment
 from .services.errors import humanize_stk_failure
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,21 @@ def mpesa_status(request, payment_id):
             'message': 'Payment confirmed',
         })
 
+    if payment.payment_method == 'mpesa_till':
+        try_match_pending_c2b_for_payment(payment)
+        payment.refresh_from_db()
+        if payment.status == 'completed':
+            return _mpesa_status_response({
+                'status': 'completed',
+                'paid': True,
+                'message': 'Payment confirmed',
+            })
+        return _mpesa_status_response({
+            'status': 'pending',
+            'paid': False,
+            'message': 'Waiting for M-Pesa till payment confirmation…',
+        })
+
     if payment.payment_method != 'mpesa':
         return _mpesa_status_response({
             'status': 'failed',
@@ -178,3 +194,37 @@ def mpesa_status(request, payment_id):
         'paid': False,
         'message': 'Waiting for you to enter your M-Pesa PIN on your phone…',
     })
+
+
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def c2b_validation(request):
+    """Daraja C2B validation callback — must respond quickly with Accept."""
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'endpoint': 'payments/c2b/validation/',
+            'message': 'C2B validation URL is reachable.',
+        })
+    try:
+        body = json.loads(request.body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+    return JsonResponse(handle_c2b_validation(body))
+
+
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def c2b_confirmation(request):
+    """Daraja C2B confirmation — payment received on till/paybill."""
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'endpoint': 'payments/c2b/confirmation/',
+            'message': 'C2B confirmation URL is reachable.',
+        })
+    try:
+        body = json.loads(request.body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+    return JsonResponse(handle_c2b_confirmation(body))
