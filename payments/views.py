@@ -14,7 +14,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_GET
 
 from .models import MpesaTransaction
-from .services import PaystackService
+from .services.activation import activate_payment_for_transaction
+from .services.c2b import handle_c2b_confirmation, handle_c2b_validation, try_match_pending_c2b_for_payment
+from .services.errors import humanize_stk_failure
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +189,21 @@ def mpesa_status(request, payment_id):
             'message': 'Payment confirmed',
         })
 
+    if payment.payment_method == 'mpesa_till':
+        try_match_pending_c2b_for_payment(payment)
+        payment.refresh_from_db()
+        if payment.status == 'completed':
+            return _mpesa_status_response({
+                'status': 'completed',
+                'paid': True,
+                'message': 'Payment confirmed',
+            })
+        return _mpesa_status_response({
+            'status': 'pending',
+            'paid': False,
+            'message': 'Waiting for M-Pesa till payment confirmation…',
+        })
+
     if payment.payment_method != 'mpesa':
         return _mpesa_status_response({
             'status': 'failed',
@@ -251,36 +268,35 @@ def mpesa_status(request, payment_id):
     })
 
 
-@require_GET
-def paystack_callback(request):
-    """
-    Browser return URL from Paystack hosted checkout.
-    """
-    from subscriptions.models import Payment
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def c2b_validation(request):
+    """Daraja C2B validation callback — must respond quickly with Accept."""
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'endpoint': 'payments/c2b/validation/',
+            'message': 'C2B validation URL is reachable.',
+        })
+    try:
+        body = json.loads(request.body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+    return JsonResponse(handle_c2b_validation(body))
 
-    reference = (request.GET.get('reference') or request.GET.get('trxref') or '').strip()
-    if not reference:
-        messages.error(request, 'Missing Paystack reference.')
-        return redirect('subscriptions:plans')
 
-    payment = Payment.objects.filter(transaction_reference=reference).first()
-    if not payment:
-        messages.error(request, 'Payment not found for this reference.')
-        return redirect('subscriptions:plans')
-
-    service = PaystackService()
-    result = service.verify_transaction(reference)
-    if not result.get('success'):
-        logger.warning('[paystack] verify failed reference=%s error=%s', reference, result.get('error_message'))
-        messages.error(request, result.get('error_message') or 'Could not verify payment. Please try again.')
-        return redirect('subscriptions:manage')
-
-    if result.get('paid'):
-        activate_payment(payment, provider_reference=result.get('reference') or reference)
-        messages.success(request, 'Payment confirmed. Your subscription is active.')
-    else:
-        payment.status = 'failed'
-        payment.save(update_fields=['status', 'updated_at'])
-        messages.error(request, result.get('error_message') or 'Payment was not completed.')
-
-    return redirect('subscriptions:manage')
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def c2b_confirmation(request):
+    """Daraja C2B confirmation — payment received on till/paybill."""
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'endpoint': 'payments/c2b/confirmation/',
+            'message': 'C2B confirmation URL is reachable.',
+        })
+    try:
+        body = json.loads(request.body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+    return JsonResponse(handle_c2b_confirmation(body))

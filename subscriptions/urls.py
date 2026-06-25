@@ -9,6 +9,7 @@ urlpatterns = [
     path('review/', views.review_subscription, name='review_subscription'),
     path('subscribe/', views.subscribe, name='subscribe'),
     path('payment/<int:payment_id>/', views.payment_instructions, name='payment_instructions'),
+    path('payment/<int:payment_id>/till/', views.till_payment, name='till_payment'),
     path('payment/<int:payment_id>/mpesa-waiting/', views.mpesa_waiting, name='mpesa_waiting'),
     path('payment/<int:payment_id>/confirm/', views.confirm_payment, name='confirm_payment'),
     path('success/', views.subscription_success, name='success'),

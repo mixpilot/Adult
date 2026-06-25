@@ -226,6 +226,10 @@ MPESA_PARTY_B = os.environ.get('MPESA_PARTY_B', '').strip() or MPESA_TILL_NUMBER
 # For local testing, use ngrok: https://your-ngrok-url.ngrok.io
 # For sandbox testing, you can use a placeholder - the system will use status polling as fallback
 MPESA_CALLBACK_BASE_URL = os.environ.get('MPESA_CALLBACK_BASE_URL', 'https://sandbox.safaricom.co.ke')
+# Shortcode used when registering C2B URLs (usually head office / paybill shortcode)
+MPESA_C2B_SHORTCODE = os.environ.get('MPESA_C2B_SHORTCODE', '').strip() or MPESA_SHORTCODE
+# C2B register API version: production defaults to v2 (v1 fails with 401 on live apps).
+MPESA_C2B_API_VERSION = os.environ.get('MPESA_C2B_API_VERSION', '').strip() or None
 
 # Daraja API Settings (alternative naming for compatibility)
 DARAJACONSUMER_KEY = MPESA_CONSUMER_KEY

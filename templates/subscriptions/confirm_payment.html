@@ -1,61 +1,59 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Confirm Payment{% endblock %}
+{% block title %}Confirm M-Pesa Payment{% endblock %}
+
+{% block extra_css %}
+<style>
+.receipt-input {
+    font-size: 1.25rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; text-align: center;
+}
+.receipt-input::placeholder { text-transform: none; letter-spacing: normal; font-weight: 400; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> Confirm Your Payment</h4>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h4 class="mb-1"><i class="bi bi-receipt text-primary"></i> Enter M-Pesa code</h4>
+                    <p class="text-muted small mb-0">From the SMS you received after paying to till <strong>{{ till_number }}</strong></p>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <h6><i class="bi bi-info-circle"></i> Payment Details</h6>
-                        <p class="mb-1"><strong>Amount:</strong> KSh {{ payment.amount|floatformat:0 }}</p>
-                        <p class="mb-1"><strong>Transaction Reference:</strong> <code>{{ payment.transaction_reference }}</code></p>
-                        <p class="mb-0"><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+                <div class="card-body p-4">
+                    <div class="bg-light rounded-3 p-3 mb-4 text-center">
+                        <div class="small text-muted">Amount paid</div>
+                        <div class="h4 mb-0 text-primary">KSh {{ payment.amount|floatformat:0 }}</div>
+                        <div class="small text-muted mt-1">{{ payment.plan.name }}</div>
                     </div>
 
                     <form method="post">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="confirmation_code" class="form-label">
-                                <strong>Confirmation Code</strong>
-                            </label>
-                            <input 
-                                type="text" 
-                                class="form-control form-control-lg" 
-                                id="confirmation_code" 
-                                name="confirmation_code" 
-                                placeholder="Enter the confirmation code from SMS"
-                                required
-                                autofocus
-                            >
-                            <small class="form-text text-muted">
-                                Enter the confirmation code you received via SMS after completing the payment
-                            </small>
+                        <div class="mb-4">
+                            <label for="confirmation_code" class="form-label fw-semibold">M-Pesa confirmation code</label>
+                            <input type="text" class="form-control form-control-lg receipt-input"
+                                   id="confirmation_code" name="confirmation_code"
+                                   placeholder="e.g. THJ4ABC12X" required autofocus
+                                   pattern="[A-Za-z0-9]{8,}" minlength="8" maxlength="20"
+                                   title="Enter the code from your M-Pesa SMS">
+                            <div class="form-text">Usually 10 characters, letters and numbers only.</div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="bi bi-check-circle"></i> Confirm Payment
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="bi bi-shield-check"></i> Submit for verification
                             </button>
-                            <a href="{% url 'subscriptions:payment_instructions' payment.id %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Instructions
+                            <a href="{% url 'subscriptions:till_payment' payment.id %}" class="btn btn-link text-muted">
+                                ← Back to till instructions
                             </a>
                         </div>
                     </form>
 
-                    <div class="alert alert-warning mt-4">
-                        <h6><i class="bi bi-clock"></i> What happens next?</h6>
-                        <p class="mb-0">
-                            After you submit the confirmation code, our team will verify your payment. 
-                            Your subscription will be activated within 24 hours (usually much faster). 
-                            You'll receive an email notification once it's activated.
-                        </p>
+                    <div class="alert alert-light border mt-4 mb-0 small">
+                        <i class="bi bi-lightning-charge text-success"></i>
+                        We verify instantly when M-Pesa confirms your till payment (usually within a minute).
+                        If not activated yet, your code is saved and we'll match it as soon as confirmation arrives.
                     </div>
                 </div>
             </div>

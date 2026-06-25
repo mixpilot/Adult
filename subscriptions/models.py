@@ -161,16 +161,8 @@ class Payment(models.Model):
     ]
     
     PAYMENT_METHOD_CHOICES = [
-        ('paystack', 'Paystack'),
-        ('mpesa', 'M-Pesa'),
-        ('airtel_money', 'Airtel Money'),
-        ('mtn_mobile_money', 'MTN Mobile Money'),
-        ('tigo_pesa', 'Tigo Pesa'),
-        ('orange_money', 'Orange Money'),
-        ('vodacom_mpesa', 'Vodacom M-Pesa'),
-        ('mobile_money', 'Mobile Money (Generic)'),
-        ('stripe', 'Stripe'),
-        ('paypal', 'PayPal'),
+        ('mpesa', 'M-Pesa STK Push'),
+        ('mpesa_till', 'M-Pesa Till'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
