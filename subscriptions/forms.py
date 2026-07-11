@@ -21,6 +21,8 @@ class SubscriptionForm(forms.Form):
     )
     billing_period = forms.ChoiceField(
         choices=[
+            ('daily', 'Daily'),
+            ('weekly', 'Weekly'),
             ('monthly', 'Monthly'),
             ('quarterly', 'Quarterly (Save 10%)'),
             ('yearly', 'Yearly (Save 20%)'),

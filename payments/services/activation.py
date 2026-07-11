@@ -6,6 +6,8 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from subscriptions.billing import billing_days_for_period
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,11 +33,7 @@ def activate_subscription_payment(payment, receipt_id: str = '') -> bool:
     from subscriptions.models import Subscription
 
     plan = payment.plan
-    billing_days = (
-        30 if payment.billing_period in ('monthly', 'once')
-        else 90 if payment.billing_period == 'quarterly'
-        else 365
-    )
+    billing_days = billing_days_for_period(payment.billing_period)
     subscription, created = Subscription.objects.get_or_create(
         user=payment.user,
         defaults={
@@ -53,7 +51,7 @@ def activate_subscription_payment(payment, receipt_id: str = '') -> bool:
         subscription.current_period_start = timezone.now()
         subscription.current_period_end = timezone.now() + timedelta(days=billing_days)
         subscription.save()
-    if payment.billing_period == 'once':
+    if payment.billing_period in ('once', 'daily', 'weekly'):
         subscription.auto_renew = False
         subscription.save(update_fields=['auto_renew'])
 

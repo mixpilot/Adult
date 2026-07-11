@@ -52,7 +52,6 @@
     font-weight: 600;
     color: #2d1f24;
 }
-.plan-card.once .card-header { background: linear-gradient(135deg, #f8bbd9 0%, #f0dce2 100%); }
 .plan-badge { font-size: 0.7rem; letter-spacing: 0.05em; }
 .list-check { color: #c41e3a; }
 </style>
@@ -63,14 +62,14 @@
     {% if is_new_user %}
     <div class="plans-hero text-center">
         <h1 class="mb-2">Welcome to Mali Safi Escorts</h1>
-        <p class="lead mb-0 opacity-95">Choose a plan below, pay securely with Paystack, and get instant access to verified escorts.</p>
+        <p class="lead mb-0 opacity-95">Choose a plan, pay with M-Pesa, and get instant access.</p>
     </div>
     {% endif %}
 
     {% if not is_new_user %}
     <div class="text-center mb-4">
         <h1 class="display-5 fw-bold">Choose Your Plan</h1>
-        <p class="lead text-muted">Pay with Paystack (or M-Pesa), and after payment you’re verified and can access escorts.</p>
+        <p class="lead text-muted">For clients and escorts — pay with M-Pesa STK Push or till.</p>
     </div>
     {% endif %}
 
@@ -82,51 +81,48 @@
     </div>
     {% endif %}
 
-    <!-- Fluid plan cards: 250/mo, 500/mo, 100 once -->
     {% if not plans %}
     <div class="alert alert-warning text-center py-4">
         <p class="mb-0">Plans are being set up. Please refresh the page in a moment.</p>
     </div>
     {% else %}
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-5 justify-content-center">
         {% for plan in plans %}
         <div class="col-lg-4 col-md-6">
-            <div class="card plan-card {% if plan.tier == 'premium' %}featured{% endif %} {% if plan.tier == 'once' %}once{% endif %}">
+            <div class="card plan-card {% if plan.tier == 'premium' %}featured{% endif %}">
                 <div class="card-header text-center">
                     {% if plan.tier == 'premium' %}
-                    <span class="plan-badge">MOST POPULAR</span>
-                    {% elif plan.tier == 'once' %}
-                    <span class="plan-badge">ONE-TIME</span>
+                    <span class="plan-badge">BEST VALUE</span>
+                    {% elif plan.tier == 'weekly' %}
+                    <span class="plan-badge">POPULAR</span>
                     {% else %}
-                    {{ plan.name|upper }}
+                    <span class="plan-badge">{{ plan.name|upper }}</span>
                     {% endif %}
                 </div>
                 <div class="card-body text-center d-flex flex-column">
                     <h3 class="h5 mb-2">{{ plan.name }}</h3>
                     <div class="mb-3">
                         <span class="price">KSh {{ plan.price_monthly|floatformat:0 }}</span>
-                        {% if plan.tier == 'once' %}
-                        <span class="price-sub d-block">one-time · 30 days access</span>
+                        {% if plan.period_label == 'one-time' %}
+                        <span class="price-sub d-block">one-time</span>
                         {% else %}
-                        <span class="price-sub">/month</span>
+                        <span class="price-sub">{{ plan.period_label }}</span>
                         {% endif %}
                     </div>
                     <p class="text-muted small mb-4 flex-grow-1">{{ plan.description }}</p>
                     <ul class="list-unstyled text-start small mb-4">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> Access verified escorts</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> Clients & escorts</li>
                         <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> Message & connect</li>
-                        {% if plan.tier == 'premium' or plan.tier == 'vip' %}
+                        <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> Verified access</li>
+                        {% if plan.tier == 'premium' %}
                         <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> Ad-free & priority support</li>
-                        {% endif %}
-                        {% if plan.tier == 'once' %}
-                        <li class="mb-2"><i class="bi bi-check-circle-fill list-check me-2"></i> No renewal</li>
                         {% endif %}
                     </ul>
                     {% if current_subscription and current_subscription.plan.id == plan.id %}
                     <button class="btn btn-secondary btn-cta w-100" disabled>Current Plan</button>
                     {% else %}
-                    <a href="{% url 'subscriptions:review_subscription' %}?plan={{ plan.id }}{% if plan.tier == 'once' %}&billing_period=once{% endif %}" class="btn btn-primary btn-cta w-100">
-                        <i class="bi bi-credit-card me-1"></i> Select plan & pay
+                    <a href="{% url 'subscriptions:review_subscription' %}?plan={{ plan.id }}&billing_period={{ plan.default_billing_period }}" class="btn btn-primary btn-cta w-100">
+                        <i class="bi bi-phone-vibrate me-1"></i> Select & pay
                     </a>
                     {% endif %}
                 </div>
@@ -138,20 +134,8 @@
 
     <div class="text-center py-3">
         <p class="text-muted mb-0">
-            <i class="bi bi-credit-card"></i> Pay with Paystack (or M-Pesa). After payment you’re verified and can browse escorts.
+            <i class="bi bi-phone"></i> Pay with M-Pesa. Your subscription activates automatically after payment.
         </p>
     </div>
-
-    {% if other_plans %}
-    <div class="card border-0 bg-light rounded-3 p-4 mt-4">
-        <div class="d-flex align-items-center flex-wrap">
-            <div class="me-3">
-                <strong>Looking for {{ other_type|title }} plans?</strong>
-                <p class="text-muted small mb-0">Change account type in settings.</p>
-            </div>
-            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary">Account settings</a>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

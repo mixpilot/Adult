@@ -18,6 +18,7 @@ import string
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
+from .billing import billing_days_for_period
 from .models import (
     SubscriptionPlan, Subscription, Payment, PromoCode,
     Token, TokenTransaction, CreatorEarning, PayPerViewPurchase, Tip
@@ -27,27 +28,35 @@ from content.models import Content
 
 
 def ensure_default_plans():
-    """Create the three default plans (250/mo, 500/mo, 100 once) if not already present. Visible to both."""
-    # Already have the default set (Standard, Premium, One Time for both)
-    if SubscriptionPlan.objects.filter(tier__in=('basic', 'premium', 'once'), user_type='both', is_active=True).count() >= 3:
+    """Create Daily (150), Weekly (200), Premium monthly (500) for clients and escorts."""
+    if SubscriptionPlan.objects.filter(
+        tier__in=('daily', 'weekly', 'premium'), user_type='both', is_active=True,
+    ).count() >= 3:
         return
     plans_data = [
-        {'tier': 'basic', 'user_type': 'both', 'name': 'Standard', 'price_monthly': Decimal('250.00'),
-         'description': 'Access verified escorts, message and connect. Perfect to get started.',
-         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': False, 'advanced_search': True},
-        {'tier': 'premium', 'user_type': 'both', 'name': 'Premium', 'price_monthly': Decimal('500.00'),
-         'price_quarterly': Decimal('1350.00'), 'price_yearly': Decimal('4800.00'),
-         'description': 'Full access, priority support, and ad-free experience. Best value.',
-         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': True, 'advanced_search': True, 'priority_support': True},
-        {'tier': 'once', 'user_type': 'both', 'name': 'One Time Access', 'price_monthly': Decimal('100.00'),
-         'description': 'One-time payment for 30 days access. No renewal.',
-         'unlimited_messaging': True, 'unlimited_content_access': True, 'ad_free': False, 'advanced_search': True},
+        {
+            'tier': 'daily', 'user_type': 'both', 'name': 'Daily', 'price_monthly': Decimal('150.00'),
+            'description': 'Full access for 24 hours. For clients and escorts.',
+            'unlimited_messaging': True, 'unlimited_content_access': True, 'advanced_search': True,
+        },
+        {
+            'tier': 'weekly', 'user_type': 'both', 'name': 'Weekly', 'price_monthly': Decimal('200.00'),
+            'description': 'Full access for 7 days. For clients and escorts.',
+            'unlimited_messaging': True, 'unlimited_content_access': True, 'advanced_search': True,
+        },
+        {
+            'tier': 'premium', 'user_type': 'both', 'name': 'Premium', 'price_monthly': Decimal('500.00'),
+            'description': 'Premium monthly access with ad-free experience and priority support.',
+            'unlimited_messaging': True, 'unlimited_content_access': True,
+            'ad_free': True, 'advanced_search': True, 'priority_support': True,
+        },
     ]
     for d in plans_data:
-        SubscriptionPlan.objects.get_or_create(
+        SubscriptionPlan.objects.update_or_create(
             tier=d['tier'], user_type=d['user_type'],
             defaults={k: v for k, v in d.items() if k not in ('tier', 'user_type')},
         )
+    SubscriptionPlan.objects.filter(tier__in=('basic', 'once')).update(is_active=False)
 
 
 @login_required
@@ -60,6 +69,7 @@ def subscription_plans(request):
     plans = list(
         SubscriptionPlan.objects.filter(is_active=True)
         .filter(models.Q(user_type=user_type) | models.Q(user_type='both'))
+        .filter(tier__in=('daily', 'weekly', 'premium'))
         .order_by('price_monthly')
     )
     if not plans:
@@ -123,10 +133,13 @@ def review_subscription(request):
             return redirect('accounts:profile')
     
     # Handle form submission (billing period and promo code selection)
+    # Fixed billing period per plan tier (daily / weekly / monthly)
     if getattr(plan, 'is_one_time_plan', plan.tier == 'once'):
         billing_period = 'once'
+    elif plan.tier in ('daily', 'weekly', 'premium'):
+        billing_period = plan.default_billing_period
     else:
-        billing_period = request.GET.get('billing_period', 'monthly')
+        billing_period = request.GET.get('billing_period', plan.default_billing_period)
     promo_code_text = request.GET.get('promo_code', '').strip()
     
     # Calculate pricing
@@ -171,6 +184,7 @@ def review_subscription(request):
         'yearly_savings': yearly_savings,
         'user_type': user_type,
         'is_one_time_plan': getattr(plan, 'is_one_time_plan', plan.tier == 'once'),
+        'is_fixed_period_plan': getattr(plan, 'is_fixed_period_plan', plan.tier in ('daily', 'weekly', 'premium', 'once')),
         'mpesa_till_number': getattr(settings, 'MPESA_TILL_NUMBER', '') or getattr(settings, 'MPESA_SHORTCODE', ''),
     }
     return render(request, 'subscriptions/review.html', context)
@@ -198,6 +212,8 @@ def subscribe(request):
         logger.warning('[subscribe] REDIRECT → plans (plan not found id=%s)', plan_id)
         messages.error(request, "Selected plan not found.")
         return redirect('subscriptions:plans')
+
+    billing_period = plan.default_billing_period if plan.tier in ('daily', 'weekly', 'premium', 'once') else billing_period
 
     if request.method != 'POST':
         logger.warning('[subscribe] REDIRECT → review (method not POST)')
@@ -489,7 +505,7 @@ def verify_payment_admin(request, payment_id):
             # Check if this is a subscription payment or token purchase
             if payment.plan:
                 # Subscription payment - create or update subscription
-                billing_days = 30 if payment.billing_period == 'monthly' else 90 if payment.billing_period == 'quarterly' else 365
+                billing_days = billing_days_for_period(payment.billing_period)
                 subscription, created = Subscription.objects.get_or_create(
                     user=payment.user,
                     defaults={

@@ -53,7 +53,7 @@
                             <h4 class="mb-1">{{ plan.name }}</h4>
                             <p class="text-muted mb-0 small">{{ plan.description|truncatewords:20 }}</p>
                         </div>
-                        <span class="badge bg-light text-dark border">{% if billing_period == 'once' %}One-time{% else %}{{ billing_period|title }}{% endif %}</span>
+                        <span class="badge bg-light text-dark border">{{ billing_period|title }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center py-3 border-top">
                         <span class="text-muted">Total due</span>
@@ -70,7 +70,7 @@
                 <input type="hidden" name="billing_period" value="{{ billing_period }}">
             </form>
 
-            {% if not is_one_time_plan %}
+            {% if not is_fixed_period_plan and not is_one_time_plan %}
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h6 class="text-muted text-uppercase small mb-3">Billing period</h6>
