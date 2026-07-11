@@ -287,6 +287,9 @@ UNFOLD = {
 # ============================================
 # Only enable in production (when DEBUG=False)
 if not DEBUG:
+    # Trust X-Forwarded-Proto from cPanel / reverse proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
     # Force HTTPS redirects
     SECURE_SSL_REDIRECT = True
     

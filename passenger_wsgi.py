@@ -1,27 +1,30 @@
+"""
+Passenger WSGI entrypoint for HostAfrica / cPanel.
+Logs startup failures to startup_error.log in the project root.
+"""
 import os
 import sys
+import traceback
 
-sys.path.insert(0, '/home/malisaf1/domains/malisafiescorts.co.ke/public_html/Adult')
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+_PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _PROJECT_DIR)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+# Load .env before Django (Passenger cwd may differ from manage.py)
+_env_file = os.path.join(_PROJECT_DIR, '.env')
+if os.path.isfile(_env_file):
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_file)
+    except ImportError:
+        pass
 
-
-
-# """
-# Passenger WSGI file for HostAfrica deployment.
-# This file should be in your project root (same level as manage.py).
-# """
-# import sys
-# import os
-
-# # Add your project directory to the Python path
-# sys.path.insert(0, os.path.dirname(__file__))
-
-# # Set the Django settings module
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-
-# # Import Django WSGI application
-# from django.core.wsgi import get_wsgi_application
-# application = get_wsgi_application()
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception:
+    _log = os.path.join(_PROJECT_DIR, 'startup_error.log')
+    with open(_log, 'a', encoding='utf-8') as fh:
+        fh.write('\n--- Passenger startup error ---\n')
+        fh.write(traceback.format_exc())
+    raise
