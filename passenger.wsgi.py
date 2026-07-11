@@ -1,6 +1,11 @@
 """
-Passenger WSGI entrypoint for HostAfrica / cPanel.
-Logs startup failures to startup_error.log in the project root.
+Django WSGI entrypoint for HostAfrica / cPanel Python App.
+
+In cPanel → Setup Python App, set:
+  Application startup file: passenger.wsgi.py
+
+Do NOT use passenger_wsgi.py as the startup file — cPanel regenerates that
+file on every restart with a broken self-referencing loader.
 """
 import os
 import sys
@@ -10,7 +15,6 @@ _PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _PROJECT_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-# Load .env before Django (Passenger cwd may differ from manage.py)
 _env_file = os.path.join(_PROJECT_DIR, '.env')
 if os.path.isfile(_env_file):
     try:

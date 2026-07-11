@@ -48,3 +48,7 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# cPanel regenerates this on every app restart — use passenger.wsgi.py instead
+passenger_wsgi.py
+startup_error.log

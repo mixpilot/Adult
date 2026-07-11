@@ -1,0 +1,13 @@
+# cPanel auto-generates passenger_wsgi.py on restart (do not commit).
+# Point cPanel "Application startup file" to passenger.wsgi.py instead.
+#
+# If you must keep passenger_wsgi.py, use this loader (not a self-reference):
+#
+# import os
+# import sys
+# sys.path.insert(0, os.path.dirname(__file__))
+# from importlib import util
+# _spec = util.spec_from_file_location('django_wsgi', os.path.join(os.path.dirname(__file__), 'passenger.wsgi.py'))
+# _mod = util.module_from_spec(_spec)
+# _spec.loader.exec_module(_mod)
+# application = _mod.application
