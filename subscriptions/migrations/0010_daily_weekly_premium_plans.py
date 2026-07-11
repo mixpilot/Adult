@@ -72,10 +72,19 @@ def noop(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('subscriptions', '0008_alter_payment_payment_method'),
+        ('subscriptions', '0009_merge_20260625_1816'),
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='payment',
+            name='payment_method',
+            field=models.CharField(
+                choices=[('mpesa', 'M-Pesa STK Push'), ('mpesa_till', 'M-Pesa Till')],
+                default='mobile_money',
+                max_length=30,
+            ),
+        ),
         migrations.AlterField(
             model_name='subscription',
             name='billing_period',
