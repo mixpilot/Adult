@@ -10,6 +10,8 @@ class SubscriptionPlan(models.Model):
     """Subscription plan tiers."""
     TIER_CHOICES = [
         ('free', 'Free'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
         ('basic', 'Basic'),
         ('premium', 'Premium'),
         ('vip', 'VIP'),
@@ -54,33 +56,44 @@ class SubscriptionPlan(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['user_type', 'price_monthly']
-        unique_together = [['tier', 'user_type']]  # Each tier can exist for both client and escort
-    
-    def __str__(self):
-        user_type_label = dict(self.USER_TYPE_CHOICES).get(self.user_type, self.user_type)
-        return f"{self.name} ({user_type_label}) - KSh {self.price_monthly}/month"
-    
-    class Meta:
         ordering = ['price_monthly']
-    
+        unique_together = [['tier', 'user_type']]
+
     def __str__(self):
-        return f"{self.name} - KSh {self.price_monthly}/month"
-    
-    def get_price(self, billing_period='monthly'):
-        """Get price for specific billing period."""
-        if billing_period == 'once':
-            return self.price_monthly  # One-time plans use price_monthly as the single payment
-        if billing_period == 'quarterly':
-            return self.price_quarterly or (self.price_monthly * 3 * Decimal('0.9'))  # 10% discount
-        elif billing_period == 'yearly':
-            return self.price_yearly or (self.price_monthly * 12 * Decimal('0.8'))  # 20% discount
+        from .billing import period_label_for_tier
+        label = period_label_for_tier(self.tier)
+        suffix = f'/{label.lstrip("/")}' if label.startswith('/') else f' ({label})'
+        return f"{self.name} - KSh {self.price_monthly}{suffix}"
+
+    @property
+    def default_billing_period(self):
+        from .billing import default_billing_for_tier
+        return default_billing_for_tier(self.tier)
+
+    @property
+    def period_label(self):
+        from .billing import period_label_for_tier
+        return period_label_for_tier(self.tier)
+
+    def get_price(self, billing_period=None):
+        """Get price for this plan (each plan has a single fixed price)."""
+        period = billing_period or self.default_billing_period
+        if period == 'once' or self.tier == 'once':
+            return self.price_monthly
+        if period == 'quarterly' and self.price_quarterly:
+            return self.price_quarterly
+        if period == 'yearly' and self.price_yearly:
+            return self.price_yearly
         return self.price_monthly
 
     @property
     def is_one_time_plan(self):
-        """True if this plan is one-time access only (no monthly renewal)."""
         return self.tier == 'once'
+
+    @property
+    def is_fixed_period_plan(self):
+        """Plan duration is tied to tier (daily/weekly/monthly) — no period picker."""
+        return self.tier in ('daily', 'weekly', 'premium', 'once')
 
 
 class Subscription(models.Model):
@@ -94,6 +107,8 @@ class Subscription(models.Model):
     ]
     
     BILLING_PERIOD_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
         ('yearly', 'Yearly'),
