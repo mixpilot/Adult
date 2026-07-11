@@ -4,6 +4,36 @@ from decimal import Decimal
 from django.db import migrations, models
 
 
+def _upsert_plan(SubscriptionPlan, data):
+    """Create or update one plan per tier; prod may have duplicate rows from old migrations."""
+    tier = data['tier']
+    user_type = data['user_type']
+    field_defaults = {
+        k: v for k, v in data.items() if k not in ('tier', 'user_type')
+    }
+
+    # Retire legacy tiers (client/escort copies of premium, standard, etc.)
+    SubscriptionPlan.objects.filter(tier=tier).exclude(user_type=user_type).update(is_active=False)
+
+    matches = list(
+        SubscriptionPlan.objects.filter(tier=tier, user_type=user_type).order_by('id')
+    )
+    if len(matches) > 1:
+        plan = matches[0]
+        SubscriptionPlan.objects.filter(
+            id__in=[p.id for p in matches[1:]],
+        ).update(is_active=False)
+    elif matches:
+        plan = matches[0]
+    else:
+        plan = SubscriptionPlan(tier=tier, user_type=user_type)
+
+    for key, value in field_defaults.items():
+        setattr(plan, key, value)
+    plan.is_active = True
+    plan.save()
+
+
 def update_plans(apps, schema_editor):
     SubscriptionPlan = apps.get_model('subscriptions', 'SubscriptionPlan')
 
@@ -46,23 +76,7 @@ def update_plans(apps, schema_editor):
         },
     ]
     for data in plans_data:
-        SubscriptionPlan.objects.update_or_create(
-            tier=data['tier'],
-            user_type=data['user_type'],
-            defaults={
-                'name': data['name'],
-                'description': data['description'],
-                'price_monthly': data['price_monthly'],
-                'price_quarterly': data.get('price_quarterly'),
-                'price_yearly': data.get('price_yearly'),
-                'unlimited_messaging': data.get('unlimited_messaging', False),
-                'unlimited_content_access': data.get('unlimited_content_access', False),
-                'ad_free': data.get('ad_free', False),
-                'advanced_search': data.get('advanced_search', False),
-                'priority_support': data.get('priority_support', False),
-                'is_active': True,
-            },
-        )
+        _upsert_plan(SubscriptionPlan, data)
 
 
 def noop(apps, schema_editor):

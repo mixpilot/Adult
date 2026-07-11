@@ -52,10 +52,22 @@ def ensure_default_plans():
         },
     ]
     for d in plans_data:
-        SubscriptionPlan.objects.update_or_create(
-            tier=d['tier'], user_type=d['user_type'],
-            defaults={k: v for k, v in d.items() if k not in ('tier', 'user_type')},
+        tier, user_type = d['tier'], d['user_type']
+        defaults = {k: v for k, v in d.items() if k not in ('tier', 'user_type')}
+        matches = list(
+            SubscriptionPlan.objects.filter(tier=tier, user_type=user_type).order_by('id')
         )
+        if len(matches) > 1:
+            plan = matches[0]
+            SubscriptionPlan.objects.filter(id__in=[p.id for p in matches[1:]]).update(is_active=False)
+            for key, value in defaults.items():
+                setattr(plan, key, value)
+            plan.is_active = True
+            plan.save()
+        else:
+            SubscriptionPlan.objects.update_or_create(
+                tier=tier, user_type=user_type, defaults=defaults,
+            )
     SubscriptionPlan.objects.filter(tier__in=('basic', 'once')).update(is_active=False)
 
 
