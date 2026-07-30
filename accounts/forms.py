@@ -8,9 +8,9 @@ class UserRegistrationForm(UserCreationForm):
     user_type = forms.ChoiceField(
         choices=User.USER_TYPE_CHOICES,
         required=True,
-        label='I want to',
+        label='I am a',
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        help_text='Choose your account type'
+        help_text='Buyers subscribe to connect. Sellers list for free.'
     )
     terms_accepted = forms.BooleanField(
         required=True,

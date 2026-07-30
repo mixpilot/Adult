@@ -119,34 +119,19 @@
         <p>Manage your escort profile, earnings, and connections</p>
     </div>
 
-    <!-- Subscription Status Banner -->
-    {% if not user.has_premium_access %}
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <div class="flex-grow-1">
-                <h5 class="alert-heading mb-1"><i class="bi bi-star-fill"></i> Upgrade to Premium Escort Plan</h5>
-                <p class="mb-0">Get featured listing, verified badge, priority ranking, and maximize your earnings!</p>
-            </div>
-            <a href="{% url 'subscriptions:plans' %}" class="btn btn-warning btn-lg ms-3">
-                <i class="bi bi-arrow-up-circle"></i> Subscribe Now
-            </a>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% elif user.has_premium_access %}
+    <!-- Seller account status -->
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div class="flex-grow-1">
-                <h5 class="alert-heading mb-1"><i class="bi bi-check-circle-fill"></i> Premium Escort Plan Active</h5>
-                <p class="mb-0">You're enjoying all premium features including featured listing and priority ranking!</p>
+                <h5 class="alert-heading mb-1"><i class="bi bi-gift-fill"></i> Seller account — free</h5>
+                <p class="mb-0">List for free, receive connections, and message buyers. Complete your profile to get found.</p>
             </div>
-            <a href="{% url 'subscriptions:manage' %}" class="btn btn-outline-success btn-lg ms-3">
-                <i class="bi bi-gear"></i> Manage Subscription
+            <a href="{% url 'connections:my_profile' %}" class="btn btn-outline-success btn-lg ms-3">
+                <i class="bi bi-person"></i> Edit profile
             </a>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    {% endif %}
 
     <!-- Quick Actions -->
     <div class="quick-escort-actions">
@@ -162,12 +147,10 @@
             <i class="bi bi-cash-coin"></i>
             <span>Earnings</span>
         </a>
-        {% if not user.has_premium_access %}
-        <a href="{% url 'subscriptions:plans' %}" class="escort-action-btn" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
-            <i class="bi bi-star-fill"></i>
-            <span>Upgrade</span>
+        <a href="{% url 'content:upload' %}" class="escort-action-btn">
+            <i class="bi bi-cloud-upload"></i>
+            <span>Upload</span>
         </a>
-        {% endif %}
     </div>
 
     <!-- Earnings Statistics -->
@@ -284,27 +267,14 @@
         </div>
         <div class="col-md-6">
             <div class="escort-section">
-                <h3><i class="bi bi-star"></i> Premium Features</h3>
-                {% if user.has_premium_access %}
+                <h3><i class="bi bi-gift"></i> Included free for sellers</h3>
                 <ul class="list-unstyled">
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Featured Listing</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Verified Badge</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Priority Ranking</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Photos</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Earnings Dashboard</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> List your profile</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Receive connection requests</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Message matched buyers</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Upload photos & content</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Earnings dashboard</li>
                 </ul>
-                {% else %}
-                <p class="text-muted">Upgrade to Premium to unlock:</p>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><i class="bi bi-x-circle text-muted"></i> Featured Listing</li>
-                    <li class="mb-2"><i class="bi bi-x-circle text-muted"></i> Verified Badge</li>
-                    <li class="mb-2"><i class="bi bi-x-circle text-muted"></i> Priority Ranking</li>
-                    <li class="mb-2"><i class="bi bi-x-circle text-muted"></i> Unlimited Photos</li>
-                </ul>
-                <a href="{% url 'subscriptions:plans' %}" class="btn btn-warning w-100">
-                    <i class="bi bi-arrow-up"></i> Upgrade Now
-                </a>
-                {% endif %}
             </div>
         </div>
     </div>

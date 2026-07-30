@@ -1,226 +1,295 @@
 {% extends 'base.html' %}
 
-{% block title %}Register - Mali Safi Escorts{% endblock %}
+{% block title %}Join Mali Safi Escorts{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --auth-ink: #2a1420;
+    --auth-muted: #7a5566;
+    --auth-rose: #c41e3a;
+    --auth-blush: #e91e63;
+    --auth-cream: #fff7f9;
+}
+.auth-page {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    padding: 2.5rem 0 3.5rem;
+    background:
+        radial-gradient(ellipse 80% 60% at 10% 20%, rgba(233, 30, 99, 0.18), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 90% 80%, rgba(196, 30, 58, 0.14), transparent 50%),
+        linear-gradient(165deg, #fff7f9 0%, #fde8ef 42%, #f8fafc 100%);
+    position: relative;
+    overflow: hidden;
+}
+.auth-page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c41e3a' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    animation: authDrift 28s linear infinite;
+}
+@keyframes authDrift {
+    from { transform: translateY(0); }
+    to { transform: translateY(-60px); }
+}
+@keyframes authRise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.auth-shell {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    animation: authRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-brand {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+.auth-brand .mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--auth-blush), var(--auth-rose));
+    color: #fff;
+    font-size: 1.5rem;
+    box-shadow: 0 12px 28px rgba(196, 30, 58, 0.28);
+    margin-bottom: 0.85rem;
+    animation: authRise 0.8s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-brand h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(1.85rem, 4vw, 2.35rem);
+    color: var(--auth-ink);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+}
+.auth-brand p {
+    font-family: "Outfit", system-ui, sans-serif;
+    color: var(--auth-muted);
+    margin: 0;
+    font-size: 1.02rem;
+}
+.auth-panel {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(196, 30, 58, 0.1);
+    border-radius: 24px;
+    padding: 1.75rem 1.6rem 1.5rem;
+    box-shadow: 0 24px 60px rgba(42, 20, 32, 0.08);
+    animation: authRise 0.75s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-panel label.form-label {
+    font-family: "Outfit", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--auth-ink);
+}
+.auth-panel .form-control {
+    font-family: "Outfit", system-ui, sans-serif;
+    border-radius: 12px;
+    border-color: #f0d5dd;
+    padding: 0.7rem 0.9rem;
+    background: var(--auth-cream);
+}
+.auth-panel .form-control:focus {
+    border-color: var(--auth-rose);
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
+    background: #fff;
+}
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.role-card {
+    border: 1.5px solid #f0d5dd;
+    border-radius: 16px;
+    padding: 1rem 0.85rem;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+.role-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(196, 30, 58, 0.1); }
+.role-card.selected {
+    border-color: var(--auth-rose);
+    background: linear-gradient(180deg, #fff 0%, #fff0f4 100%);
+    box-shadow: 0 10px 28px rgba(196, 30, 58, 0.14);
+}
+.role-card input { display: none; }
+.role-card .role-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; margin-bottom: 0.55rem;
+}
+.role-card.buyer .role-icon { background: #fce4ec; color: var(--auth-rose); }
+.role-card.seller .role-icon { background: #e8f5e9; color: #2e7d32; }
+.role-card strong {
+    font-family: "Outfit", system-ui, sans-serif;
+    display: block; color: var(--auth-ink); font-size: 0.98rem;
+}
+.role-card small { color: var(--auth-muted); line-height: 1.35; display: block; margin-top: 0.2rem; }
+.role-badge {
+    display: inline-block; margin-top: 0.55rem;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; padding: 0.2rem 0.45rem; border-radius: 999px;
+}
+.role-badge.pay { background: #fce4ec; color: var(--auth-rose); }
+.role-badge.free { background: #e8f5e9; color: #2e7d32; }
+.auth-submit {
+    font-family: "Outfit", system-ui, sans-serif;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, var(--auth-blush), var(--auth-rose));
+    box-shadow: 0 12px 28px rgba(196, 30, 58, 0.28);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.auth-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 32px rgba(196, 30, 58, 0.35);
+    background: linear-gradient(135deg, #f06292, #b71c34);
+}
+.auth-footer {
+    font-family: "Outfit", system-ui, sans-serif;
+    text-align: center;
+    margin-top: 1.25rem;
+    color: var(--auth-muted);
+}
+.auth-footer a { color: var(--auth-rose); font-weight: 600; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+.form-check-label { font-family: "Outfit", system-ui, sans-serif; color: var(--auth-ink); font-size: 0.92rem; }
+@media (max-width: 576px) {
+    .role-grid { grid-template-columns: 1fr; }
+    .auth-panel { padding: 1.35rem 1.1rem; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card">
-                <div class="card-header text-center">
-                    <h3>Create Account</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            {{ form.username }}
-                            {% if form.username.errors %}
-                            <div class="text-danger">{{ form.username.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                            <div class="text-danger">{{ form.email.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            {{ form.password1 }}
-                            <div id="password-strength" class="mt-2"></div>
-                            {% if form.password1.errors %}
-                            <div class="text-danger">{{ form.password1.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                Password must be at least 8 characters and contain letters and numbers.
-                            </small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            {{ form.password2 }}
-                            {% if form.password2.errors %}
-                            <div class="text-danger">{{ form.password2.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Account Type Selection -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold"><strong>{{ form.user_type.label }}</strong></label>
-                            <div class="card border mb-2">
-                                <div class="card-body">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="form-check p-3 border rounded user-type-card" data-type="client" style="cursor: pointer; background: rgba(196, 30, 58, 0.08); border-color: #f0dce2 !important;">
-                                                <input class="form-check-input" type="radio" name="user_type" id="id_user_type_0" value="client" required>
-                                                <label class="form-check-label w-100" for="id_user_type_0" style="cursor: pointer;">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-person-fill text-primary me-2" style="font-size: 1.5rem;"></i>
-                                                        <div>
-                                                            <strong class="d-block">Client</strong>
-                                                            <small class="text-muted">Looking for escorts</small>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-check p-3 border rounded user-type-card" data-type="escort" style="cursor: pointer; background: rgba(233, 30, 99, 0.08); border-color: #f0dce2 !important;">
-                                                <input class="form-check-input" type="radio" name="user_type" id="id_user_type_1" value="escort" required>
-                                                <label class="form-check-label w-100" for="id_user_type_1" style="cursor: pointer;">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-briefcase-fill text-danger me-2" style="font-size: 1.5rem;"></i>
-                                                        <div>
-                                                            <strong class="d-block">Escort</strong>
-                                                            <small class="text-muted">Providing services</small>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% if form.user_type.errors %}
-                            <div class="text-danger">{{ form.user_type.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                <i class="bi bi-info-circle"></i> You can change this later in your account settings
-                            </small>
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            {{ form.age_verified }}
-                            <label class="form-check-label" for="{{ form.age_verified.id_for_label }}">
-                                {{ form.age_verified.label }}
-                            </label>
-                            {% if form.age_verified.errors %}
-                            <div class="text-danger">{{ form.age_verified.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3 form-check">
-                            {{ form.terms_accepted }}
-                            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
-                                {{ form.terms_accepted.label }}
-                            </label>
-                            {% if form.terms_accepted.errors %}
-                            <div class="text-danger">{{ form.terms_accepted.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                <a href="{% url 'core:terms' %}" target="_blank">Read Terms of Service</a> ·
-                                <a href="{% url 'core:privacy' %}" target="_blank">Privacy Policy</a>
-                            </small>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
-                    </form>
-                    <hr>
-                    <p class="text-center mb-0">Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
-                </div>
+<div class="auth-page">
+    <div class="container">
+        <div class="auth-shell">
+            <div class="auth-brand">
+                <div class="mark"><i class="bi bi-fire"></i></div>
+                <h1>Mali Safi Escorts</h1>
+                <p>Create your account — sellers free, buyers subscribe</p>
             </div>
+
+            <div class="auth-panel">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        {{ form.password1 }}
+                        <div id="password-strength" class="mt-2"></div>
+                        {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label d-block mb-2">I am a</label>
+                        <div class="role-grid">
+                            <label class="role-card buyer" id="roleBuyer">
+                                <input type="radio" name="user_type" value="client" required {% if form.user_type.value == 'client' %}checked{% endif %}>
+                                <div class="role-icon"><i class="bi bi-heart-fill"></i></div>
+                                <strong>Buyer</strong>
+                                <small>Browse & message verified escorts</small>
+                                <span class="role-badge pay">Paid plans</span>
+                            </label>
+                            <label class="role-card seller" id="roleSeller">
+                                <input type="radio" name="user_type" value="escort" required {% if form.user_type.value == 'escort' %}checked{% endif %}>
+                                <div class="role-icon"><i class="bi bi-briefcase-fill"></i></div>
+                                <strong>Seller</strong>
+                                <small>List your profile & get clients</small>
+                                <span class="role-badge free">Free forever</span>
+                            </label>
+                        </div>
+                        {% if form.user_type.errors %}<div class="text-danger small mt-2">{{ form.user_type.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-2 form-check">
+                        {{ form.age_verified }}
+                        <label class="form-check-label" for="{{ form.age_verified.id_for_label }}">{{ form.age_verified.label }}</label>
+                        {% if form.age_verified.errors %}<div class="text-danger small">{{ form.age_verified.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-4 form-check">
+                        {{ form.terms_accepted }}
+                        <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                            I agree to the <a href="{% url 'core:terms' %}" target="_blank">Terms</a> &amp; <a href="{% url 'core:privacy' %}" target="_blank">Privacy Policy</a>
+                        </label>
+                        {% if form.terms_accepted.errors %}<div class="text-danger small">{{ form.terms_accepted.errors }}</div>{% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-submit w-100">Create account</button>
+                </form>
+            </div>
+
+            <p class="auth-footer">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
         </div>
     </div>
 </div>
 
 <script>
-// Update selection visual feedback
-function updateSelection() {
-    const cards = document.querySelectorAll('.user-type-card');
-    cards.forEach(card => {
-        const radio = card.querySelector('input[type="radio"]');
-        if (radio.checked) {
-            if (radio.value === 'client') {
-                card.style.background = 'rgba(196, 30, 58, 0.15)';
-                card.style.borderColor = '#c41e3a';
-                card.style.borderWidth = '2px';
-            } else {
-                card.style.background = 'rgba(233, 30, 99, 0.15)';
-                card.style.borderColor = '#e91e63';
-                card.style.borderWidth = '2px';
-            }
-        } else {
-            if (radio.value === 'client') {
-                card.style.background = 'rgba(196, 30, 58, 0.08)';
-            } else {
-                card.style.background = 'rgba(233, 30, 99, 0.08)';
-            }
-            card.style.borderWidth = '1px';
-        }
-    });
-}
-
-// Password strength indicator
-document.addEventListener('DOMContentLoaded', function() {
-    // Make entire card clickable
-    document.querySelectorAll('.user-type-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'INPUT') {
-                const radio = this.querySelector('input[type="radio"]');
-                radio.checked = true;
-                updateSelection();
-            }
+(function() {
+    function syncRoles() {
+        document.querySelectorAll('.role-card').forEach(function(card) {
+            var radio = card.querySelector('input[type="radio"]');
+            card.classList.toggle('selected', radio && radio.checked);
+        });
+    }
+    document.querySelectorAll('.role-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var radio = card.querySelector('input[type="radio"]');
+            if (radio) { radio.checked = true; syncRoles(); }
         });
     });
-    
-    // Add event listeners to radio buttons
-    document.querySelectorAll('input[name="user_type"]').forEach(radio => {
-        radio.addEventListener('change', updateSelection);
+    document.querySelectorAll('input[name="user_type"]').forEach(function(r) {
+        r.addEventListener('change', syncRoles);
     });
-    
-    // Initialize selection feedback
-    updateSelection();
-    const passwordInput = document.getElementById('id_password1');
-    const strengthDiv = document.getElementById('password-strength');
-    
+    syncRoles();
+
+    var passwordInput = document.getElementById('id_password1');
+    var strengthDiv = document.getElementById('password-strength');
     if (passwordInput && strengthDiv) {
         passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
-            let strengthText = '';
-            let strengthColor = '';
-            
-            // Check password strength
+            var password = this.value, strength = 0;
             if (password.length >= 8) strength++;
             if (password.length >= 12) strength++;
             if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^A-Za-z0-9]/.test(password)) strength++;
-            
-            // Determine strength level
-            if (strength === 0) {
-                strengthText = '';
-                strengthColor = '';
-            } else if (strength <= 2) {
-                strengthText = 'Weak';
-                strengthColor = '#dc3545';
-            } else if (strength <= 3) {
-                strengthText = 'Medium';
-                strengthColor = '#ffc107';
-            } else if (strength <= 4) {
-                strengthText = 'Strong';
-                strengthColor = '#28a745';
-            } else {
-                strengthText = 'Very Strong';
-                strengthColor = '#20c997';
-            }
-            
-            // Display strength indicator
-            if (password.length > 0) {
-                strengthDiv.innerHTML = `
-                    <div class="progress" style="height: 5px;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: ${(strength / 5) * 100}%; background-color: ${strengthColor};" 
-                             aria-valuenow="${strength}" aria-valuemin="0" aria-valuemax="5">
-                        </div>
-                    </div>
-                    <small style="color: ${strengthColor};">${strengthText}</small>
-                `;
-            } else {
-                strengthDiv.innerHTML = '';
-            }
+            var labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong'];
+            var colors = ['', '#dc3545', '#fd7e14', '#ffc107', '#28a745', '#198754'];
+            if (!password.length) { strengthDiv.innerHTML = ''; return; }
+            strengthDiv.innerHTML =
+                '<div class="progress" style="height:5px"><div class="progress-bar" style="width:' + (strength/5*100) + '%;background:' + colors[strength] + '"></div></div>' +
+                '<small style="color:' + colors[strength] + '">' + labels[strength] + '</small>';
         });
     }
-});
+})();
 </script>
 {% endblock %}

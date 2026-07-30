@@ -58,9 +58,11 @@
                             {% if pending_connection_requests_count %}<span class="badge bg-danger ms-1">{{ pending_connection_requests_count }}</span>{% endif %}
                         </a>
                     </li>
+                    {% if user.user_type == 'client' %}
                     <li class="nav-item">
                         <a class="nav-link text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Subscribe</a>
                     </li>
+                    {% endif %}
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:register' %}"><i class="bi bi-heart"></i> Find Escorts</a>
@@ -83,13 +85,18 @@
                             <li><a class="dropdown-item" href="{% url 'connections:connections_list' %}">Connections</a></li>
                             <li><a class="dropdown-item" href="{% url 'connections:messages_list' %}">Messages</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            {% if user.user_type == 'client' %}
                             {% if user.has_premium_access %}
-                            <li><a class="dropdown-item text-success" href="{% url 'subscriptions:manage' %}"><i class="bi bi-check-circle-fill"></i> Premium Active</a></li>
+                            <li><a class="dropdown-item text-success" href="{% url 'subscriptions:manage' %}"><i class="bi bi-check-circle-fill"></i> Subscription Active</a></li>
                             {% else %}
-                            <li><a class="dropdown-item text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Upgrade to Premium</a></li>
+                            <li><a class="dropdown-item text-warning" href="{% url 'subscriptions:plans' %}"><i class="bi bi-star-fill"></i> Choose a Plan</a></li>
                             {% endif %}
                             <li><a class="dropdown-item" href="{% url 'subscriptions:manage' %}"><i class="bi bi-credit-card"></i> Manage Subscription</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            {% else %}
+                            <li><a class="dropdown-item text-success" href="{% url 'connections:my_profile' %}"><i class="bi bi-check-circle-fill"></i> Seller — Free account</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{% url 'content:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
                             <li><a class="dropdown-item" href="{% url 'content:bookmarks' %}"><i class="bi bi-bookmark-fill"></i> Bookmarks</a></li>
                             <li><a class="dropdown-item" href="{% url 'content:watch_history' %}"><i class="bi bi-clock-history"></i> Watch History</a></li>

@@ -19,11 +19,25 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}! Please select a payment package to get started.')
             login(request, user)
-            # Redirect to subscription plans with new_user flag
-            plans_url = reverse('subscriptions:plans') + '?new_user=1'
-            return redirect(plans_url)
+
+            # Sellers (escorts) are free — activate and send to dashboard
+            if user.user_type == 'escort':
+                if not user.is_verified:
+                    user.is_verified = True
+                    user.save(update_fields=['is_verified'])
+                messages.success(
+                    request,
+                    f'Welcome, {username}! Seller accounts are free — complete your profile to start receiving clients.',
+                )
+                return redirect('core:home')
+
+            # Buyers must subscribe before using the platform
+            messages.success(
+                request,
+                f'Welcome, {username}! Choose a plan to unlock browsing and messaging.',
+            )
+            return redirect(reverse('subscriptions:plans') + '?new_user=1')
     else:
         form = UserRegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})

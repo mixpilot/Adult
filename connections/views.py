@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_http_methods
 from django.utils import timezone
-from core.decorators import age_verified_required, rate_limit, ajax_required
+from core.decorators import age_verified_required, rate_limit, ajax_required, premium_required
 from .models import UserProfile, ProfilePhoto, Connection, Message, Visit, UserReport
 from .forms import UserProfileForm, ProfilePhotoForm, MessageForm, UserSearchForm, UserReportForm
 from accounts.models import User
@@ -15,11 +15,12 @@ from content.models import Content
 
 @login_required
 @age_verified_required
+@premium_required
 def browse_users(request):
-    """Browse and search for escorts (only users with escort profiles)."""
+    """Browse and search for escorts (buyers must be subscribed)."""
     # Escorts don't need to browse other escorts - they're service providers
     if request.user.user_type == 'escort':
-        messages.info(request, 'This page is for clients looking for escorts.')
+        messages.info(request, 'This page is for buyers looking for escorts.')
         return redirect('core:home')
     
     form = UserSearchForm(request.GET)
@@ -118,6 +119,7 @@ def browse_users(request):
 
 @login_required
 @age_verified_required
+@premium_required
 def user_profile(request, user_id):
     """View another user's profile."""
     profile_user = get_object_or_404(User, id=user_id)
@@ -219,6 +221,7 @@ def my_profile(request):
 @login_required
 @age_verified_required
 @require_POST
+@premium_required
 @rate_limit(max_requests=20, period=60, key_prefix='connect_user')
 def connect_user(request, user_id):
     """Send a connection request (like/favorite)."""
@@ -329,6 +332,7 @@ def messages_list(request):
 @login_required
 @age_verified_required
 @require_http_methods(["GET", "POST"])
+@premium_required
 @rate_limit(max_requests=30, period=60, key_prefix='send_message')
 def chat(request, user_id):
     """Chat with a specific user. Only allowed once connection is accepted (matched)."""

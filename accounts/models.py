@@ -6,8 +6,8 @@ from django.utils import timezone
 class User(AbstractUser):
     """Custom user model with additional fields."""
     USER_TYPE_CHOICES = [
-        ('client', 'Client - Looking for Escorts'),
-        ('escort', 'Escort - Providing Services'),
+        ('client', 'Buyer - Looking for Escorts'),
+        ('escort', 'Seller - Providing Services (Free)'),
     ]
     
     bio = models.TextField(blank=True, null=True)
@@ -23,10 +23,21 @@ class User(AbstractUser):
         return self.username
     
     def has_premium_access(self):
-        """Check if user has active premium subscription."""
+        """
+        Buyers need an active paid subscription.
+        Sellers (escorts) register and use the platform for free.
+        """
+        if self.is_staff:
+            return True
+        if self.user_type == 'escort':
+            return True
         if hasattr(self, 'subscription'):
             return self.subscription.is_active
         return False
+
+    def needs_paid_subscription(self):
+        """True when this user must pay before using buyer features."""
+        return self.user_type == 'client' and not self.has_premium_access()
     
     def has_subscription_tier(self, tier):
         """Check if user has specific subscription tier."""

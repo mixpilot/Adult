@@ -40,22 +40,26 @@ def age_verified_required(view_func):
 
 def premium_required(view_func):
     """
-    Decorator to ensure user has premium access.
-    Checks if user has active premium subscription.
+    Decorator to ensure user has premium/buyer access.
+    Sellers (escorts) are free; buyers need an active subscription.
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            messages.warning(request, 'Please login to access premium content.')
+            messages.warning(request, 'Please login to access this content.')
             return redirect('accounts:login')
-        
-        # Check premium subscription
-        if not request.user.has_premium_access():
-            messages.warning(request, 'Premium subscription required to access this content.')
+
+        if request.user.needs_paid_subscription():
+            messages.warning(request, 'Subscribe to unlock browsing, messaging, and connections.')
             return redirect('subscriptions:plans')
-        
+
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+
+def buyer_subscription_required(view_func):
+    """Alias: buyers must pay; sellers pass through."""
+    return premium_required(view_func)
 
 
 def verified_user_required(view_func):

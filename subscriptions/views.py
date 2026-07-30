@@ -73,7 +73,14 @@ def ensure_default_plans():
 
 @login_required
 def subscription_plans(request):
-    """Display subscription plans based on user type."""
+    """Display subscription plans for buyers. Sellers use the platform for free."""
+    if request.user.user_type == 'escort':
+        messages.info(
+            request,
+            'Seller accounts are free. Complete your profile to appear in search and receive messages.',
+        )
+        return redirect('core:home')
+
     ensure_default_plans()
     user_type = request.user.user_type
     is_new_user = request.GET.get('new_user') == '1'
@@ -117,7 +124,11 @@ def generate_transaction_reference():
 
 @login_required
 def review_subscription(request):
-    """Review subscription plan details before payment."""
+    """Review subscription plan details before payment (buyers only)."""
+    if request.user.user_type == 'escort':
+        messages.info(request, 'Seller accounts are free — no payment needed.')
+        return redirect('core:home')
+
     plan_id = request.GET.get('plan')
     if not plan_id:
         messages.error(request, "Please select a plan first.")
@@ -355,7 +366,11 @@ def subscription_success(request):
 
 @login_required
 def manage_subscription(request):
-    """Manage user's subscription and payment history."""
+    """Manage user's subscription and payment history (buyers only)."""
+    if request.user.user_type == 'escort':
+        messages.info(request, 'Seller accounts are free — no subscription needed.')
+        return redirect('core:home')
+
     subscription = None
     if hasattr(request.user, 'subscription'):
         subscription = request.user.subscription
